@@ -1,0 +1,7 @@
+# Este repo é só o app CRM (E+ Wallet) — ignora tudo por padrão.
+# A pasta local tem material de prospecção (planilhas de leads, rascunhos de
+# email, scripts de enriquecimento) que não deve ir para o Git.
+/*
+!.gitignore
+!.nojekyll
+!CRM_E+Wallet.html
