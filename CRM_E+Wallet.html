@@ -357,6 +357,13 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
 .apollo-btn:disabled{opacity:.5;cursor:default}
 .apollo-hint{font-size:10.5px;color:#047857;margin-top:5px;line-height:1.5}
 
+.d-contact-made{margin:14px 26px 0;padding:12px 14px;border-radius:var(--radius);background:var(--surface-2);border:1px solid var(--border)}
+.d-contact-made-lbl{font-size:11.5px;font-weight:700;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.d-contact-made-btns{display:flex;gap:8px}
+.cm-btn{flex:1;padding:9px 6px;border-radius:var(--radius-sm);border:none;background:#059669;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:5px}
+.cm-btn:hover{opacity:.88}
+.cm-btn:disabled{opacity:.5;cursor:default}
+
 /* ===== EXTRA CONTATOS ===== */
 .extra-contacts-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 .extra-contact-card{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border)}
@@ -719,7 +726,7 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     </div>
 
     <div class="sidebar-foot">
-      <div style="margin-bottom:8px">Atualizado em 12/08/2026</div>
+      <div style="margin-bottom:8px">Atualizado em 14/08/2026</div>
       <button type="button" onclick="doLogout()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;cursor:pointer">Sair</button>
     </div>
   </aside>
@@ -883,6 +890,15 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     </div>
   </div>
 
+  <div class="d-contact-made">
+    <div class="d-contact-made-lbl">✅ Contato feito — mover para Aguardando</div>
+    <div class="d-contact-made-btns">
+      <button class="cm-btn" onclick="markContactMade('Email')">📧 Email</button>
+      <button class="cm-btn" onclick="markContactMade('WhatsApp')">💬 WhatsApp</button>
+      <button class="cm-btn" onclick="markContactMade('Ligação')">📞 Ligação</button>
+    </div>
+  </div>
+
   <div id="d-apollo-section" style="display:none">
     <div class="apollo-wrap">
       <div class="apollo-hdr">
@@ -965,7 +981,7 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
 
 <script>
 // ============================================================
-// DADOS — última atualização: 2026-08-12
+// DADOS — última atualização: 2026-08-14
 // ============================================================
 let LEADS = [];
 // ── CONFIG ─────────────────────────────────────────────────────────────────
@@ -1494,6 +1510,36 @@ async function confirmApollo() {
   if (btn) { btn.textContent = '✅ Movido para Engajar!'; btn.disabled = true; }
   render();
   setTimeout(() => { closeDrawer(); openDrawer(id); }, 500);
+}
+
+async function markContactMade(channel) {
+  const id = _currentDrawerId;
+  const lead = LEADS.find(l => l.id === id);
+  if (!lead) return;
+
+  const btns = document.querySelectorAll('.cm-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const hojeISO = today();
+  const paDate = new Date();
+  paDate.setDate(paDate.getDate() + 7);
+  const paISO = paDate.toISOString().split('T')[0];
+  const logLine = `${fmt(hojeISO)}: Contato feito via ${channel}, aguardando resposta.`;
+
+  const changes = {
+    status: 'aguardando',
+    canal:  channel,
+    pc:     lead.pc || hojeISO,
+    ua:     hojeISO,
+    pa:     paISO,
+    pd:     `Aguardar resposta — follow-up se não responder até ${fmt(paISO)}`,
+    obs:    (lead.obs ? lead.obs + ' ' : '') + logLine,
+  };
+  Object.assign(lead, changes);
+  const { error } = await sb.from('leads').update(changes).eq('id', id);
+  if (error) { alert('Erro ao salvar: ' + error.message); btns.forEach(b => b.disabled = false); return; }
+  render();
+  closeDrawer();
 }
 
 function lsGetContacts(leadId) {
