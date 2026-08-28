@@ -1234,6 +1234,7 @@ function openDrawer(id){
   _currentDrawerId=id;
   // Reset edit mode se estava aberto
   if(_editingId!==null){_editingId=null;const ep=document.getElementById("d-edit-panel");if(ep){ep.innerHTML="";ep.style.display="none";}const vs=document.getElementById("d-view-sections");if(vs)vs.style.display="block";const eb=document.getElementById("d-edit-btn");if(eb){eb.innerHTML="\u270F\uFE0F Editar lead";eb.className="d-edit-btn";}}
+  document.querySelectorAll('.cm-btn').forEach(b => b.disabled = false);
   document.getElementById("d-avatar").outerHTML=avatarHtml(l.nome,"lg").replace('class="avatar lg"','id="d-avatar" class="avatar lg"');
   document.getElementById("d-empresa").textContent=l.empresa;
   const seg=SEG[l.seg]||{ic:""};
@@ -1537,7 +1538,8 @@ async function markContactMade(channel) {
   };
   Object.assign(lead, changes);
   const { error } = await sb.from('leads').update(changes).eq('id', id);
-  if (error) { alert('Erro ao salvar: ' + error.message); btns.forEach(b => b.disabled = false); return; }
+  btns.forEach(b => b.disabled = false);
+  if (error) { alert('Erro ao salvar: ' + error.message); return; }
   render();
   closeDrawer();
 }
