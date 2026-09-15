@@ -1469,7 +1469,7 @@ document.getElementById("nav-empresas").addEventListener("click",()=>showView("e
 function openApolloSection(lead) {
   const sec = document.getElementById('d-apollo-section');
   if (!sec) return;
-  if (lead.status === 'apollo-pendente') {
+  if (lead.status === 'apollo-pendente' || lead.status === 'no-radar') {
     sec.style.display = 'block';
     const nomeEl  = document.getElementById('apollo-nome');
     const cargoEl = document.getElementById('apollo-cargo');
