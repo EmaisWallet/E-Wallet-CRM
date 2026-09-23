@@ -2196,6 +2196,9 @@ function toggleEditMode() {
       <button class="btn-save" onclick="saveLeadEdit()">💾 Salvar alterações</button>
       <button class="btn-cancel-edit" onclick="cancelEdit()">Cancelar</button>
     </div>
+    <div class="edit-actions" style="border-top:none;margin-top:0;padding-top:0">
+      <button class="btn-cancel-edit" style="width:100%;color:var(--red-soft-text);border-color:rgba(220,38,38,.25)" onclick="deleteLead()">🗑️ Excluir lead (não pode ser desfeito)</button>
+    </div>
   </div>`;
   document.getElementById('d-edit-panel').style.display = 'block';
 }
@@ -2261,6 +2264,29 @@ function cancelEdit() {
     const ds = document.getElementById('d-draft-section');
     if (ds) ds.style.display = 'block';
   }
+}
+
+async function deleteLead() {
+  const id = _editingId || _currentDrawerId;
+  const lead = LEADS.find(l => l.id === id);
+  if (!lead) return;
+  const ok = confirm(`Excluir "${lead.empresa}" definitivamente?\n\nIsso não pode ser desfeito — remove o lead, os contatos extras e o histórico de contato associados a ele.`);
+  if (!ok) return;
+
+  const { error } = await sb.from('leads').delete().eq('id', id);
+  if (error) { alert('Erro ao excluir: ' + error.message); return; }
+
+  const idx = LEADS.findIndex(l => l.id === id);
+  if (idx !== -1) LEADS.splice(idx, 1);
+  delete CONTACTS[id];
+  CONTACT_LOG = CONTACT_LOG.filter(c => c.lead_id !== id);
+
+  cancelEdit();
+  closeDrawer();
+  if (curView === 'empresas') renderEmpresas();
+  else if (curView === 'meudia') renderMeuDia();
+  else if (curView === 'dashboard') renderDashboard();
+  else render();
 }
 
 // ── NOVO LEAD ─────────────────────────────────────────────────────
