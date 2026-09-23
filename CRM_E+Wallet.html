@@ -654,6 +654,26 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
   flex-shrink: 0;
 }
 
+/* CARDS DA ESTRATÉGIA DE PROVA SOCIAL — mapeamento de 90+ concorrentes (set/2026), prioridade de curto prazo */
+.kcard.kcard-provasocial{
+  background: linear-gradient(0deg, rgba(124,58,237,.08), rgba(124,58,237,.08)), var(--surface);
+  border-left: 3px solid #7c3aed;
+  padding-left: 11px;
+}
+.kcard.kcard-provasocial:hover{
+  background: linear-gradient(0deg, rgba(124,58,237,.13), rgba(124,58,237,.13)), var(--surface);
+}
+.provasocial-badge{
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #6d28d9;
+  background: rgba(124,58,237,.16);
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 </style>
 </head>
 <body>
@@ -1082,7 +1102,7 @@ function filtered(){
     if(cSeg!=="todos"&&l.seg!==cSeg)return false;
     if(cStatus==="urgente"&&!isUrg(l))return false;
     else if(cStatus!=="todos"&&cStatus!=="urgente"&&l.status!==cStatus)return false;
-    if(q){const lq=q.toLowerCase();if(!l.empresa.toLowerCase().includes(lq)&&!l.nome.toLowerCase().includes(lq))return false;}
+    if(q){const lq=q.toLowerCase();if(!(l.empresa||"").toLowerCase().includes(lq)&&!(l.nome||"").toLowerCase().includes(lq))return false;}
     return true;
   });
 }
@@ -1133,7 +1153,7 @@ function renderToday(){
   el.innerHTML=list.map(l=>`
     <div class="today-row ${isOverdue(l)?"overdue":"due"}" onclick="openDrawer(${l.id})">
       <div class="today-empresa">${l.empresa}</div>
-      <div class="today-contato">${avatarHtml(l.nome)}${l.nome}</div>
+      <div class="today-contato">${avatarHtml(l.nome)}${l.nome||"—"}</div>
       ${badge(l.status)}
       <div class="today-action">${l.pd}</div>
       <div class="chev">›</div>
@@ -1154,8 +1174,13 @@ const KCOLS = [
 function hasNewDecisor(l){
   return!!(l.obs&&l.obs.includes("via linkedin-pesquisa-decisores"));
 }
+function hasProvaSocial(l){
+  return!!(l.obs&&l.obs.includes("#prova-social-90"));
+}
 function cardClass(l){
-  return hasNewDecisor(l)?"kcard kcard-newdecisor":"kcard";
+  if(hasProvaSocial(l))return"kcard kcard-provasocial";
+  if(hasNewDecisor(l))return"kcard kcard-newdecisor";
+  return"kcard";
 }
 
 function daysDiff(dateStr){
@@ -1200,6 +1225,7 @@ function renderKanban(){
         <div class="kcard-top">
           <div class="kcard-empresa">${l.empresa}</div>
           ${hasNewDecisor(l)?`<span class="newdecisor-badge" title="Decisor identificado via linkedin-pesquisa-decisores">🔎 Novo</span>`:""}
+          ${hasProvaSocial(l)?`<span class="provasocial-badge" title="Lead da estratégia de prova social — mapeamento de concorrentes (set/2026)">⭐ Prova Social</span>`:""}
           ${priorityPill(l)}
         </div>
         ${(l.nome&&l.nome!=="—")||cargoTxt?`<div class="kcard-contact">
@@ -1248,7 +1274,7 @@ function openDrawer(id){
   document.getElementById("d-next-date").textContent=l.pa&&l.pa!=="—"?`Data: ${fmt(l.pa)}`:"Sem data definida";
 
   document.getElementById("d-contact-grid").innerHTML=[
-    ["Contato",l.nome],["Cargo",l.cargo||"—"],
+    ["Contato",l.nome||"—"],["Cargo",l.cargo||"—"],
     ["Email",l.email||"—"],["Telefone",l.tel||"—"],
     ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
   ].map(([k,v])=>`<div class="d-field"><span class="fl">${k}</span><span class="fv">${v}</span></div>`).join("");
@@ -1262,7 +1288,7 @@ function openDrawer(id){
       <div class="contact-row">
         ${avatarHtml(o.nome)}
         <div class="contact-info">
-          <div class="contact-name">${o.nome}</div>
+          <div class="contact-name">${o.nome||"—"}</div>
           <div class="contact-role">${o.cargo&&o.cargo!=="—"?o.cargo:"Cargo não identificado"} · ${SC[o.status]?.lbl||o.status}</div>
         </div>
         <div class="contact-valid">${o.val?"✅":"⚠️"}</div>
@@ -1469,6 +1495,11 @@ document.getElementById("nav-empresas").addEventListener("click",()=>showView("e
 function openApolloSection(lead) {
   const sec = document.getElementById('d-apollo-section');
   if (!sec) return;
+  // O botão é HTML estático (reaproveitado entre leads) — sem isso, depois
+  // do 1º "Confirmar e mover para Engajar" bem-sucedido ele fica desabilitado
+  // pra sempre e o 2º lead não consegue mais usar a ação até dar F5.
+  const btn = sec.querySelector('.apollo-btn');
+  if (btn) { btn.disabled = false; btn.textContent = '✅ Confirmar e mover para Engajar'; }
   if (lead.status === 'apollo-pendente' || lead.status === 'no-radar') {
     sec.style.display = 'block';
     const nomeEl  = document.getElementById('apollo-nome');
@@ -1617,13 +1648,27 @@ const EMAIL_DOMAIN = 'emaiswallet.internal';
 
 let CONTACTS = {};
 
+// PostgREST limita cada resposta a 1000 linhas por padrão — busca em páginas
+// até esgotar, senão leads além da linha 1000 somem silenciosamente do app.
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let all = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').order('id').range(offset, offset + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data);
+    if (data.length < PAGE) break;
+    offset += PAGE;
+  }
+  return all;
+}
+
 async function fetchAllData() {
-  const [{ data: leads, error: leadsErr }, { data: contacts, error: contactsErr }] = await Promise.all([
-    sb.from('leads').select('*').order('id'),
-    sb.from('lead_contacts').select('*').order('id'),
+  const [leads, contacts] = await Promise.all([
+    fetchAllRows('leads'),
+    fetchAllRows('lead_contacts'),
   ]);
-  if (leadsErr) throw leadsErr;
-  if (contactsErr) throw contactsErr;
   LEADS.length = 0;
   LEADS.push(...leads);
   CONTACTS = {};
@@ -1659,15 +1704,30 @@ function showLogin(errMsg) {
   if (el) el.textContent = errMsg || '';
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// O projeto Supabase (free-tier) pausa após dias sem tráfego e demora
+// ~1-2min pra "acordar" no 1º request — tenta de novo com backoff antes de
+// desistir, em vez de já mandar o usuário de volta pro login.
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { showLogin(); return; }
-  try {
-    await fetchAllData();
-    showApp();
-    render();
-  } catch (e) {
-    showLogin('Erro ao carregar dados. Tente novamente.');
+  const backoffs = [0, 2000, 5000, 10000];
+  for (let i = 0; i < backoffs.length; i++) {
+    if (backoffs[i]) {
+      showLogin(`Conectando ao banco de dados... (tentativa ${i + 1}/${backoffs.length})`);
+      await sleep(backoffs[i]);
+    }
+    try {
+      await fetchAllData();
+      showApp();
+      render();
+      return;
+    } catch (e) {
+      if (i === backoffs.length - 1) {
+        showLogin('Erro ao carregar dados. Tente novamente.');
+      }
+    }
   }
 }
 
@@ -1842,7 +1902,11 @@ async function saveNewLead() {
   const empresa = (document.getElementById('nl-empresa').value || '').trim();
   if (!empresa) { alert('Nome da empresa é obrigatório.'); return; }
 
-  const newId = Math.max(0, ...LEADS.map(l => l.id)) + 1;
+  // Busca o max id direto no banco — o array local pode estar incompleto
+  // (paginação) ou desatualizado em relação a inserts feitos por outros processos.
+  const { data: maxRows, error: maxErr } = await sb.from('leads').select('id').order('id', { ascending: false }).limit(1);
+  if (maxErr) { alert('Erro ao criar lead: ' + maxErr.message); return; }
+  const newId = (maxRows && maxRows.length ? maxRows[0].id : 0) + 1;
   const g = eid => (document.getElementById(eid) || {}).value || '';
 
   const lead = {
