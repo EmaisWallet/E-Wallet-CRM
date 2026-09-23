@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -537,6 +537,12 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+.kcard-signals{
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-top: -4px;
+}
 .kcard-date{ font-size: 10.5px; color: var(--text-3); font-weight: 500; }
 .kcard-date.late{ color: #ef4444; font-weight: 600; }
 
@@ -765,7 +771,7 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       </div>
       <div class="search-wrap">
         <span class="search-ic">🔍</span>
-        <input class="search" id="search" placeholder="Buscar empresa ou contato…">
+        <input class="search" id="search" placeholder="Buscar empresa, contato, email… (ou status:aguardando)" title="Dica: use status:aguardando ou segmento:varejo pra filtrar direto pela busca">
       </div>
       <div class="topbar-actions">
         <button class="btn-tbar primary" onclick="openNewLeadModal()">➕ Novo Lead</button>
@@ -779,6 +785,12 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <div class="stat-card"><div class="stat-top"><div class="stat-ic">⏳</div></div><div class="stat-n" id="s-aguardando">—</div><div class="stat-l">Aguardando resposta</div></div>
       <div class="stat-card"><div class="stat-top"><div class="stat-ic">📅</div></div><div class="stat-n" id="s-agendamento">—</div><div class="stat-l">Agendando reunião</div></div>
       <div class="stat-card"><div class="stat-top"><div class="stat-ic">🟢</div></div><div class="stat-n" id="s-reuniao">—</div><div class="stat-l">Reuniões agendadas</div></div>
+    </div>
+
+    <div id="no-action-alert" style="display:none;align-items:center;gap:10px;background:var(--red-soft);color:var(--red-soft-text);border-radius:var(--radius);padding:11px 16px;margin-bottom:18px;font-size:13px;font-weight:600">
+      <span style="font-size:15px">⚠</span>
+      <span id="no-action-txt" style="flex:1"></span>
+      <button type="button" onclick="showNoActionOnly()" style="padding:6px 12px;border-radius:var(--radius-sm);border:none;background:var(--red);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Resolver agora</button>
     </div>
 
     <div id="view-pipeline">
@@ -812,69 +824,80 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <button class="modal-x" onclick="closeNewLeadModal()">✕</button>
     </div>
     <div class="modal-bdy">
-      <div class="modal-stitle">Empresa</div>
+      <!-- Campos essenciais — cadastro rápido em poucos segundos -->
       <div class="modal-row">
-        <label class="mlbl">Empresa *<input id="nl-empresa" placeholder="Nome da empresa" required></label>
-        <label class="mlbl">Segmento<select id="nl-seg">
-          <option>Automotivo</option>
-          <option>Farmacêutico</option>
-          <option>Varejo</option>
-          <option>Alimentos & Bebidas</option>
-          <option>Cosméticos</option>
-          <option>Saúde</option>
-          <option>Benefícios</option>
-          <option>Construção & Imobiliário</option>
-          <option>Seguros</option>
-          <option>Bebidas</option>
-          <option>Bebidas / Alimentos</option>
-          <option>Aviação / Turismo</option>
-          <option>Turismo / Viagens</option>
-          <option>Saúde / Diagnóstica</option>
-          <option>Planos de Saúde</option>
-          <option>Educação</option>
-          <option>Moda / Calçados</option>
-          <option>Varejo / Joalheria</option>
-          <option>Moda / Varejo</option>
-          <option>Energia / Combustíveis</option>
-          <option>Locação de Veículos</option>
-          <option>Tecnologia / ERP</option>
-          <option>Construção Civil / Imóveis</option>
-          <option>Máquinas & Ferramentas</option>
-          <option>Pets</option>
-          <option>Mobilidade Urbana</option>
-        </select></label>
+        <label class="mlbl full">Empresa *<input id="nl-empresa" placeholder="Nome da empresa" required></label>
       </div>
-      <div class="modal-stitle">Contato</div>
       <div class="modal-row">
         <label class="mlbl">Nome do contato<input id="nl-nome" placeholder="Nome Sobrenome"></label>
         <label class="mlbl">Cargo<input id="nl-cargo" placeholder="Ex: Diretor Comercial"></label>
       </div>
       <div class="modal-row">
-        <label class="mlbl">Email<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
-        <label class="mlbl">Telefone<input id="nl-tel" placeholder="11 99999-9999"></label>
+        <label class="mlbl full">Email<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
       </div>
       <div class="modal-row">
-        <label class="mlbl">Canal<input id="nl-canal" placeholder="Email / LinkedIn / WhatsApp" value="LinkedIn"></label>
-      </div>
-      <div class="modal-stitle">Pipeline</div>
-      <div class="modal-row">
-        <label class="mlbl">Status<select id="nl-status">
+        <label class="mlbl">Próxima ação<select id="nl-status">
           <option value="apollo-pendente">Confirmar Apollo</option>
-          <option value="email-preparado">Enviar Email</option>
-          <option value="follow-up">Follow-up</option>
           <option value="no-radar">No Radar</option>
+          <option value="email-preparado">Enviar Email</option>
           <option value="reengajamento">Reengajar</option>
           <option value="aguardando">Aguardando</option>
+          <option value="follow-up">Follow-up</option>
         </select></label>
-        <label class="mlbl">Próxima ação — data<input id="nl-pa" type="date"></label>
+        <label class="mlbl">Data<input id="nl-pa" type="date"></label>
       </div>
-      <div class="modal-row">
-        <label class="mlbl full">Descrição da ação<input id="nl-pd" placeholder="Ex: Validar email no Apollo"></label>
+
+      <button type="button" class="add-contact-btn" style="margin-top:6px" onclick="toggleNewLeadMore()">
+        <span id="nl-more-lbl">➕ Mais informações (segmento, telefone, canal, notas)</span>
+      </button>
+
+      <div id="nl-more" style="display:none">
+        <div class="modal-stitle" style="margin-top:14px">Empresa</div>
+        <div class="modal-row">
+          <label class="mlbl full">Segmento<select id="nl-seg">
+            <option>Automotivo</option>
+            <option>Farmacêutico</option>
+            <option>Varejo</option>
+            <option>Alimentos & Bebidas</option>
+            <option>Cosméticos</option>
+            <option>Saúde</option>
+            <option>Benefícios</option>
+            <option>Construção & Imobiliário</option>
+            <option>Seguros</option>
+            <option>Bebidas</option>
+            <option>Bebidas / Alimentos</option>
+            <option>Aviação / Turismo</option>
+            <option>Turismo / Viagens</option>
+            <option>Saúde / Diagnóstica</option>
+            <option>Planos de Saúde</option>
+            <option>Educação</option>
+            <option>Moda / Calçados</option>
+            <option>Varejo / Joalheria</option>
+            <option>Moda / Varejo</option>
+            <option>Energia / Combustíveis</option>
+            <option>Locação de Veículos</option>
+            <option>Tecnologia / ERP</option>
+            <option>Construção Civil / Imóveis</option>
+            <option>Máquinas & Ferramentas</option>
+            <option>Pets</option>
+            <option>Mobilidade Urbana</option>
+          </select></label>
+        </div>
+        <div class="modal-stitle">Contato</div>
+        <div class="modal-row">
+          <label class="mlbl">Telefone<input id="nl-tel" placeholder="11 99999-9999"></label>
+          <label class="mlbl">Canal<input id="nl-canal" placeholder="Email / LinkedIn / WhatsApp" value="LinkedIn"></label>
+        </div>
+        <div class="modal-stitle">Pipeline</div>
+        <div class="modal-row">
+          <label class="mlbl full">Descrição da ação<input id="nl-pd" placeholder="Ex: Validar email no Apollo"></label>
+        </div>
+        <div class="modal-stitle">Notas / Fit</div>
+        <div class="modal-row">
+          <label class="mlbl full">Contexto e fit com E+ Wallet<textarea id="nl-obs" rows="4" placeholder="Por que essa empresa? Fit, contatos identificados, observações..."></textarea></label>
+        </div>
       </div>
-      <div class="modal-stitle">Notas / Fit</div>
-      <div class="modal-row">
-        <label class="mlbl full">Contexto e fit com E+ Wallet<textarea id="nl-obs" rows="4" placeholder="Por que essa empresa? Fit, contatos identificados, observações..."></textarea></label>
-      </div>
+
       <div class="modal-ft">
         <button class="btn-save" style="flex:1" onclick="saveNewLead()">💾 Adicionar lead</button>
         <button class="btn-cancel-edit" onclick="closeNewLeadModal()">Cancelar</button>
@@ -1052,7 +1075,9 @@ const AV_COLORS = ["#2f5eff","#7c3aed","#16a34a","#b45309","#0d9488","#dc2626","
 // ── STATE ──────────────────────────────────────────────────────────────────
 let cSeg="todos", cStatus="todos", q="";
 let sortKey="pa", sortDir=1;
-const today=()=>new Date().toISOString().split("T")[0];
+// toISOString() é UTC — no fuso de Brasília isso faz "hoje" virar "amanhã" entre 21h e meia-noite.
+// en-CA formata como YYYY-MM-DD nativamente, então não precisamos remontar a string.
+const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date());
 const fmt=d=>(!d||d==="—")?"—":d.split("-").reverse().join("/");
 const badge=(s)=>{const c=SC[s]||{lbl:s,cls:"",ic:""};return`<span class="badge ${c.cls}"><span class="dot-b"></span>${c.lbl}</span>`};
 const isUrg=(l)=>SC[l.status]?.urg||false;
@@ -1097,12 +1122,41 @@ function parseTimeline(obs){
 }
 
 // ── FILTER ─────────────────────────────────────────────────────────────────
+const hasNoAction=l=>(!l.pa||l.pa==="—")&&l.status!=="ganho"&&l.status!=="perdido";
+
+// Busca simples com operadores opcionais: "status:aguardando", "segmento:varejo"
+// misturados com texto livre (empresa, contato, email, telefone).
+function parseQuery(raw){
+  const out={text:[],status:null,seg:null};
+  (raw||"").trim().split(/\s+/).forEach(tok=>{
+    if(!tok)return;
+    const m=tok.match(/^(status|segmento):(.+)$/i);
+    if(m){
+      const key=m[1].toLowerCase(),val=m[2].toLowerCase();
+      if(key==="status")out.status=val;else out.seg=val;
+    }else{
+      out.text.push(tok.toLowerCase());
+    }
+  });
+  return out;
+}
+
 function filtered(){
+  const pq=parseQuery(q);
   return LEADS.filter(l=>{
     if(cSeg!=="todos"&&l.seg!==cSeg)return false;
     if(cStatus==="urgente"&&!isUrg(l))return false;
-    else if(cStatus!=="todos"&&cStatus!=="urgente"&&l.status!==cStatus)return false;
-    if(q){const lq=q.toLowerCase();if(!(l.empresa||"").toLowerCase().includes(lq)&&!(l.nome||"").toLowerCase().includes(lq))return false;}
+    else if(cStatus==="sem-acao"&&!hasNoAction(l))return false;
+    else if(cStatus!=="todos"&&cStatus!=="urgente"&&cStatus!=="sem-acao"&&l.status!==cStatus)return false;
+    if(pq.status){
+      const lbl=(SC[l.status]?.lbl||"").toLowerCase();
+      if(l.status.toLowerCase()!==pq.status&&!lbl.includes(pq.status))return false;
+    }
+    if(pq.seg&&!(l.seg||"").toLowerCase().includes(pq.seg))return false;
+    if(pq.text.length){
+      const hay=[l.empresa,l.nome,l.email,l.tel].map(v=>(v||"").toLowerCase()).join(" ");
+      if(!pq.text.every(t=>hay.includes(t)))return false;
+    }
     return true;
   });
 }
@@ -1114,6 +1168,29 @@ function sorted(list){
     av=String(av).toLowerCase();bv=String(bv).toLowerCase();
     if(av<bv)return-1*dir;if(av>bv)return 1*dir;return 0;
   });
+}
+
+function renderNoActionAlert(){
+  const n=LEADS.filter(hasNoAction).length;
+  const el=document.getElementById("no-action-alert");
+  if(!el)return;
+  if(n>0){
+    el.style.display="flex";
+    document.getElementById("no-action-txt").textContent=
+      n===1?"1 lead sem próxima ação definida — pode ficar esquecido no pipeline.":
+      `${n} leads sem próxima ação definida — podem ficar esquecidos no pipeline.`;
+  }else{
+    el.style.display="none";
+  }
+}
+function showNoActionOnly(){
+  document.getElementById("status-filter").querySelectorAll(".side-item[data-status]").forEach(x=>x.classList.remove("active"));
+  document.getElementById("seg-filter").querySelectorAll(".side-item[data-seg]").forEach(x=>x.classList.remove("active"));
+  document.querySelector('.side-item[data-seg="todos"]').classList.add("active");
+  cSeg="todos";cStatus="sem-acao";
+  showView("pipeline");
+  window.scrollTo({top:0,behavior:"smooth"});
+  render();
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────────────
@@ -1152,24 +1229,39 @@ function renderToday(){
   if(!list.length){el.innerHTML='<div class="today-empty">Nada urgente para hoje. 🎉</div>';return;}
   el.innerHTML=list.map(l=>`
     <div class="today-row ${isOverdue(l)?"overdue":"due"}" onclick="openDrawer(${l.id})">
-      <div class="today-empresa">${l.empresa}</div>
-      <div class="today-contato">${avatarHtml(l.nome)}${l.nome||"—"}</div>
+      <div class="today-empresa">${escH(l.empresa)}</div>
+      <div class="today-contato">${avatarHtml(l.nome)}${escH(l.nome||"—")}</div>
       ${badge(l.status)}
-      <div class="today-action">${l.pd}</div>
+      <div class="today-action">${escH(l.pd)}</div>
       <div class="chev">›</div>
     </div>`).join("");
 }
 
+// Sequência lógica do funil (Radar → Qualificar → Engajar → Aguardar → Agendar → Reunião → Resultado).
+// "Follow-up vencido" e "Não entregue" não são mais colunas próprias — são estados de alerta
+// dentro de "Aguardar" (ver statusAlert()), já que continuam sendo leads aguardando resposta,
+// só que sinalizados. Isso é só reagrupamento de apresentação: os valores de status no banco
+// (lead_status enum) não mudam, então as automações que escrevem 'no-radar' etc continuam iguais.
 const KCOLS = [
-  {id:"followup",   title:"Follow-up",        ic:"🔴", statuses:["follow-up","nao-entregue"],            hint:"Acionar",       tint:"var(--col-orange)"},
-  {id:"engajar",    title:"Engajar",           ic:"📬", statuses:["email-preparado","reengajamento"],     hint:"Enviar agora",  tint:"var(--col-blue)"},
-  {id:"aguardando", title:"Aguardando",        ic:"⏳", statuses:["aguardando"],                         hint:"Sem resposta",  tint:"var(--col-gray)"},
-  {id:"apollo",     title:"Confirmar Apollo",  ic:"🔵", statuses:["apollo-pendente"],                    hint:"Validar email", tint:"var(--col-purple)"},
-  {id:"radar",      title:"No Radar",          ic:"📡", statuses:["no-radar"],                           hint:"Qualificar",    tint:"var(--col-indigo)"},
-  {id:"agendamento",title:"Agendamento",       ic:"📅", statuses:["agendamento"],                        hint:"Confirmar data",tint:"var(--col-teal)"},
-  {id:"reuniao",    title:"Reunião",           ic:"🟢", statuses:["reuniao"],                            hint:"Realizar",      tint:"var(--col-green)"},
-  {id:"avancado",   title:"Ganhos / Perdidos", ic:"🏁", statuses:["proposta","ganho","perdido"],          hint:"Fechamento",    tint:"var(--col-gray)"},
+  {id:"radar",      title:"Radar",       ic:"📡", statuses:["no-radar"],                                     hint:"Qualificar",    tint:"var(--col-indigo)"},
+  {id:"qualificar", title:"Qualificar",  ic:"🔵", statuses:["apollo-pendente"],                               hint:"Validar email", tint:"var(--col-purple)"},
+  {id:"engajar",    title:"Engajar",     ic:"📬", statuses:["email-preparado","reengajamento"],               hint:"Enviar agora",  tint:"var(--col-blue)"},
+  {id:"aguardar",   title:"Aguardar",    ic:"⏳", statuses:["aguardando","follow-up","nao-entregue"],         hint:"Sem resposta",  tint:"var(--col-orange)"},
+  {id:"agendar",    title:"Agendar",     ic:"📅", statuses:["agendamento"],                                   hint:"Confirmar data",tint:"var(--col-teal)"},
+  {id:"reuniao",    title:"Reunião",     ic:"🟢", statuses:["reuniao"],                                       hint:"Realizar",      tint:"var(--col-green)"},
+  {id:"resultado",  title:"Resultado",   ic:"🏁", statuses:["proposta","ganho","perdido"],                    hint:"Fechamento",    tint:"var(--col-gray)"},
 ];
+
+// Alerta de status dentro da coluna "Aguardar" — sinaliza follow-up vencido/não entregue
+// sem precisar de uma coluna própria pra cada um (reduz o número de colunas e o esforço
+// cognitivo de "por que existem tantas colunas parecidas").
+function statusAlert(l){
+  if(l.status==="follow-up"||l.status==="nao-entregue"){
+    const sc=SC[l.status];
+    return`<span class="pri-pill pri-atrasado" title="${escH(sc.lbl)}">${sc.ic} ${escH(sc.lbl)}</span>`;
+  }
+  return"";
+}
 
 function hasNewDecisor(l){
   return!!(l.obs&&l.obs.includes("via linkedin-pesquisa-decisores"));
@@ -1221,18 +1313,25 @@ function renderKanban(){
       const nomeShort=(l.nome&&l.nome!=="—")?l.nome.split(" ")[0]:"?";
       const avColor=hashColor(l.nome||l.empresa);
       const cargoTxt=l.cargo&&l.cargo!=="—"?l.cargo:"";
+      // Hierarquia de sinais: 1 alerta principal (status > prazo) em destaque,
+      // sinais secundários (Novo/Prova Social) agrupados numa linha discreta,
+      // em vez de vários badges coloridos competindo por atenção no mesmo card.
+      const primaryAlert=statusAlert(l)||priorityPill(l);
+      const secondarySignals=[
+        hasNewDecisor(l)?"🔎 Novo":null,
+        hasProvaSocial(l)?"⭐ Prova Social":null,
+      ].filter(Boolean);
       return`<div class="${cardClass(l)}" onclick="openDrawer(${l.id})">
         <div class="kcard-top">
-          <div class="kcard-empresa">${l.empresa}</div>
-          ${hasNewDecisor(l)?`<span class="newdecisor-badge" title="Decisor identificado via linkedin-pesquisa-decisores">🔎 Novo</span>`:""}
-          ${hasProvaSocial(l)?`<span class="provasocial-badge" title="Lead da estratégia de prova social — mapeamento de concorrentes (set/2026)">⭐ Prova Social</span>`:""}
-          ${priorityPill(l)}
+          <div class="kcard-empresa">${escH(l.empresa)}</div>
+          ${primaryAlert}
         </div>
+        ${secondarySignals.length?`<div class="kcard-signals">${secondarySignals.join(" · ")}</div>`:""}
         ${(l.nome&&l.nome!=="—")||cargoTxt?`<div class="kcard-contact">
           <div class="av-sm" style="background:${avColor}">${initials(l.nome)}</div>
-          <div><div class="kcard-nome">${l.nome&&l.nome!=="—"?l.nome:"—"}</div>${cargoTxt?`<div class="kcard-cargo">${cargoTxt}</div>`:""}</div>
+          <div><div class="kcard-nome">${escH(l.nome&&l.nome!=="—"?l.nome:"—")}</div>${cargoTxt?`<div class="kcard-cargo">${escH(cargoTxt)}</div>`:""}</div>
         </div>`:""}
-        ${l.pd?`<div class="kcard-action">${l.pd}</div>`:""}
+        ${l.pd?`<div class="kcard-action">${escH(l.pd)}</div>`:""}
         <div class="kcard-foot">
           ${dateStr?`<span class="${dateCls}">📅 ${dateStr}</span>`:"<span></span>"}
           <span class="kcard-seg"><span class="sw" style="background:${seg.sw}"></span>${seg.ic}</span>
@@ -1252,7 +1351,7 @@ function renderKanban(){
   }).join("");
 }
 
-function render(){renderStats();renderSidebarCounts();renderKanban();}
+function render(){renderStats();renderSidebarCounts();renderKanban();renderNoActionAlert();}
 
 // ── DRAWER ─────────────────────────────────────────────────────────────────
 function openDrawer(id){
@@ -1277,7 +1376,7 @@ function openDrawer(id){
     ["Contato",l.nome||"—"],["Cargo",l.cargo||"—"],
     ["Email",l.email||"—"],["Telefone",l.tel||"—"],
     ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
-  ].map(([k,v])=>`<div class="d-field"><span class="fl">${k}</span><span class="fv">${v}</span></div>`).join("");
+  ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
 
   // other contacts at same empresa
   const others=LEADS.filter(x=>x.empresa===l.empresa&&x.id!==l.id);
@@ -1288,8 +1387,8 @@ function openDrawer(id){
       <div class="contact-row">
         ${avatarHtml(o.nome)}
         <div class="contact-info">
-          <div class="contact-name">${o.nome||"—"}</div>
-          <div class="contact-role">${o.cargo&&o.cargo!=="—"?o.cargo:"Cargo não identificado"} · ${SC[o.status]?.lbl||o.status}</div>
+          <div class="contact-name">${escH(o.nome||"—")}</div>
+          <div class="contact-role">${escH(o.cargo&&o.cargo!=="—"?o.cargo:"Cargo não identificado")} · ${escH(SC[o.status]?.lbl||o.status)}</div>
         </div>
         <div class="contact-valid">${o.val?"✅":"⚠️"}</div>
       </div>`).join("");
@@ -1307,8 +1406,8 @@ function openDrawer(id){
       <div class="tl-item">
         <div class="tl-rail"><div class="tl-dot"></div><div class="tl-line"></div></div>
         <div>
-          ${e.date?`<div class="tl-date">${e.date}</div>`:""}
-          <div class="tl-text">${e.text}</div>
+          ${e.date?`<div class="tl-date">${escH(e.date)}</div>`:""}
+          <div class="tl-text">${escT(e.text)}</div>
         </div>
       </div>`).join("");
   }
@@ -1339,7 +1438,7 @@ function openDrawer(id){
   document.getElementById("d-tech").innerHTML=[
     ["ID",l.id],["Última atualização",fmt(l.ua)],
     ["Data cadastro",fmt(l.pc)],["Segmento",l.seg],
-  ].map(([k,v])=>`<div class="tech-field"><span>${k}</span><b>${v}</b></div>`).join("");
+  ].map(([k,v])=>`<div class="tech-field"><span>${escH(k)}</span><b>${escH(v)}</b></div>`).join("");
 
   openApolloSection(l);
   renderExtraContacts(l.id);
@@ -1427,6 +1526,7 @@ function renderEmpresas(){
     return 2;
   };
   const empMap={};
+  const compMap=companiesMap();
   LEADS.forEach(l=>{
     const k=l.empresa;
     if(!empMap[k]){empMap[k]=l;return;}
@@ -1454,13 +1554,15 @@ function renderEmpresas(){
       const cardCls=`emp-card ${ov?"urg":dueT?"warn":ganho?"ok":dim?"dim":""}`;
       const dateStr=l.pa&&l.pa!=="—"?fmt(l.pa):"";
       const dateCls=ov?"emp-date late":"emp-date";
+      const contCount=(compMap[l.empresa]||[]).length;
       return`<div class="${cardCls}" onclick="openDrawer(${l.id})">
-        <div class="emp-nome">${l.empresa}</div>
-        ${l.nome&&l.nome!=="—"?`<div class="emp-contato">👤 ${l.nome}${l.cargo&&l.cargo!=="—"?" · "+l.cargo:""}</div>`:"<div class='emp-contato' style='color:var(--text-3)'>Decisor não identificado</div>"}
+        <div class="emp-nome">${escH(l.empresa)}</div>
+        ${l.nome&&l.nome!=="—"?`<div class="emp-contato">👤 ${escH(l.nome)}${l.cargo&&l.cargo!=="—"?" · "+escH(l.cargo):""}</div>`:"<div class='emp-contato' style='color:var(--text-3)'>Decisor não identificado</div>"}
         <div class="emp-foot">
-          <span class="badge ${sc.cls}" style="font-size:10px;padding:2px 6px">${sc.ic} ${sc.lbl}</span>
+          <span class="badge ${sc.cls}" style="font-size:10px;padding:2px 6px">${sc.ic} ${escH(sc.lbl)}</span>
           ${dateStr?`<span class="${dateCls}">📅 ${dateStr}</span>`:""}
         </div>
+        ${contCount>1?`<div style="font-size:10.5px;color:var(--text-3)">${contCount} contatos nesta empresa</div>`:""}
       </div>`;
     }).join("");
     return`<div class="emp-seg-section">
@@ -1882,6 +1984,19 @@ function openNewLeadModal() {
   // Setar data de hoje no campo pa
   const paInput = document.getElementById('nl-pa');
   if (paInput) paInput.value = today();
+  const more = document.getElementById('nl-more');
+  if (more) more.style.display = 'none';
+  const moreLbl = document.getElementById('nl-more-lbl');
+  if (moreLbl) moreLbl.textContent = '➕ Mais informações (segmento, telefone, canal, notas)';
+}
+
+function toggleNewLeadMore() {
+  const more = document.getElementById('nl-more');
+  const lbl = document.getElementById('nl-more-lbl');
+  if (!more) return;
+  const open = more.style.display !== 'none';
+  more.style.display = open ? 'none' : 'block';
+  if (lbl) lbl.textContent = open ? '➕ Mais informações (segmento, telefone, canal, notas)' : '➖ Ocultar mais informações';
 }
 
 function closeNewLeadModal() {
