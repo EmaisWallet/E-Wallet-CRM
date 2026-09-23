@@ -709,6 +709,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <button class="side-item active" id="nav-pipeline" type="button">
         <span class="lbl"><span class="ic">📊</span>Pipeline</span>
       </button>
+      <button class="side-item" id="nav-meudia" type="button">
+        <span class="lbl"><span class="ic">☀️</span>Meu dia</span>
+      </button>
       <button class="side-item" id="nav-empresas" type="button">
         <span class="lbl"><span class="ic">🏢</span>Empresas</span>
       </button>
@@ -814,6 +817,20 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <div id="emp-content"></div>
     </div>
 
+    <div id="view-meudia" style="display:none">
+      <div class="section-hdr" style="margin-bottom:14px;justify-content:space-between">
+        <div style="display:flex;align-items:baseline;gap:9px">
+          <h2>Meu dia</h2>
+          <span class="hint">— pipeline serve pra enxergar, meu dia serve pra trabalhar</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="btn-tbar" id="md-scope-equipe" onclick="setMeuDiaScope('equipe')">Equipe inteira</button>
+          <button type="button" class="btn-tbar" id="md-scope-minha" onclick="setMeuDiaScope('minha')">Minha fila</button>
+        </div>
+      </div>
+      <div id="md-content"></div>
+    </div>
+
   </main>
 </div>
 
@@ -845,6 +862,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
           <option value="follow-up">Follow-up</option>
         </select></label>
         <label class="mlbl">Data<input id="nl-pa" type="date"></label>
+      </div>
+      <div class="modal-row">
+        <label class="mlbl full">Responsável<select id="nl-owner"><option value="">Sem responsável</option></select></label>
       </div>
 
       <button type="button" class="add-contact-btn" style="margin-top:6px" onclick="toggleNewLeadMore()">
@@ -913,9 +933,13 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
   <div class="d-hero">
     <div class="d-hero-top">
       <div class="avatar lg" id="d-avatar">—</div>
-      <div>
+      <div style="flex:1">
         <div class="d-empresa" id="d-empresa">—</div>
         <div class="d-seg" id="d-seg">—</div>
+      </div>
+      <div style="text-align:right">
+        <select id="d-owner-select" onchange="setOwner(this.value)" style="font-size:11.5px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);cursor:pointer"></select>
+        <div id="d-updated-by" style="font-size:10px;color:var(--text-3);margin-top:4px"></div>
       </div>
     </div>
     <div class="d-badges" id="d-badges"></div>
@@ -1009,6 +1033,11 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     <div class="timeline" id="d-timeline"></div>
   </div>
 
+  <div class="d-section" id="d-context-section" style="display:none">
+    <div class="d-section-title">Contexto comercial</div>
+    <div class="d-grid" id="d-context-grid"></div>
+  </div>
+
   <div class="d-section" id="d-notes-section">
     <div class="d-section-title">Notas</div>
     <div class="notes-box" id="d-notes">—</div>
@@ -1072,12 +1101,30 @@ const SEG = {
 };
 const AV_COLORS = ["#2f5eff","#7c3aed","#16a34a","#b45309","#0d9488","#dc2626","#4338ca","#c2410c"];
 
+// Lista fixa da equipe — bate com os usuários já cadastrados no Supabase Auth
+// (username -> username@emaiswallet.internal). Adicionar/remover gente exige
+// editar essa lista (ver documento técnico, seção "owner_user_id").
+const TEAM = [
+  {id:"leonardo",     nome:"Leonardo"},
+  {id:"elioabdon",    nome:"Elio Abdon"},
+  {id:"marciasaluto", nome:"Marcia Saluto"},
+  {id:"gaby",         nome:"Gaby"},
+];
+function teamName(id){ return TEAM.find(t=>t.id===id)?.nome || id || ""; }
+let CURRENT_USER_ID = null;
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 let cSeg="todos", cStatus="todos", q="";
 let sortKey="pa", sortDir=1;
 // toISOString() é UTC — no fuso de Brasília isso faz "hoje" virar "amanhã" entre 21h e meia-noite.
 // en-CA formata como YYYY-MM-DD nativamente, então não precisamos remontar a string.
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date());
+// +N dias a partir de hoje (fuso Brasília) — meio-dia UTC evita qualquer virada de dia por DST/fuso na soma.
+const addDaysISO=(days)=>{
+  const d=new Date(today()+"T12:00:00Z");
+  d.setUTCDate(d.getUTCDate()+days);
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(d);
+};
 const fmt=d=>(!d||d==="—")?"—":d.split("-").reverse().join("/");
 const badge=(s)=>{const c=SC[s]||{lbl:s,cls:"",ic:""};return`<span class="badge ${c.cls}"><span class="dot-b"></span>${c.lbl}</span>`};
 const isUrg=(l)=>SC[l.status]?.urg||false;
@@ -1334,7 +1381,10 @@ function renderKanban(){
         ${l.pd?`<div class="kcard-action">${escH(l.pd)}</div>`:""}
         <div class="kcard-foot">
           ${dateStr?`<span class="${dateCls}">📅 ${dateStr}</span>`:"<span></span>"}
-          <span class="kcard-seg"><span class="sw" style="background:${seg.sw}"></span>${seg.ic}</span>
+          <span style="display:flex;align-items:center;gap:8px">
+            ${l.owner_user_id?`<span class="kcard-seg" title="Responsável: ${escH(teamName(l.owner_user_id))}">● ${escH(teamName(l.owner_user_id).split(" ")[0])}</span>`:""}
+            <span class="kcard-seg"><span class="sw" style="background:${seg.sw}"></span>${seg.ic}</span>
+          </span>
         </div>
       </div>`;
     }).join(""):
@@ -1364,8 +1414,19 @@ function openDrawer(id){
   document.getElementById("d-empresa").textContent=l.empresa;
   const seg=SEG[l.seg]||{ic:""};
   document.getElementById("d-seg").textContent=`${seg.ic} ${l.seg}`;
-  document.getElementById("d-badges").innerHTML=badge(l.status)+`<span class="badge" style="background:var(--surface-2);color:var(--text-2)">${l.canal}</span>`+
+  document.getElementById("d-badges").innerHTML=badge(l.status)+`<span class="badge" style="background:var(--surface-2);color:var(--text-2)">${escH(l.canal)}</span>`+
     (l.val?`<span class="badge" style="background:var(--green-soft);color:var(--green-soft-text)">✓ LinkedIn validado</span>`:`<span class="badge" style="background:var(--gray-soft);color:var(--text-3)">⚠ Não validado</span>`);
+
+  // Responsável + concorrência: guarda o updated_at que carregamos agora pra comparar
+  // na hora de salvar (ver saveLeadEdit) — se mudou nesse meio tempo, alguém mexeu antes de nós.
+  _drawerLoadedUpdatedAt = l.updated_at || null;
+  const ownerSel=document.getElementById("d-owner-select");
+  if(ownerSel){
+    ownerSel.innerHTML=`<option value="">Sem responsável</option>`+TEAM.map(t=>`<option value="${t.id}">${escH(t.nome)}${t.id===CURRENT_USER_ID?" (você)":""}</option>`).join("");
+    ownerSel.value=l.owner_user_id||"";
+  }
+  const updBy=document.getElementById("d-updated-by");
+  if(updBy) updBy.textContent=l.updated_by?`Atualizado por ${teamName(l.updated_by)}`:"";
 
   const callout=document.getElementById("d-callout");
   callout.className="d-callout"+(isUrg(l)?" urgent":"");
@@ -1377,6 +1438,18 @@ function openDrawer(id){
     ["Email",l.email||"—"],["Telefone",l.tel||"—"],
     ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
   ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
+
+  // Contexto comercial — só mostra a seção se algum dos 3 campos tiver conteúdo,
+  // pra não poluir o drawer de leads antigos que nunca preencheram isso.
+  const ctxSec=document.getElementById("d-context-section");
+  if(l.fit||l.gatilho||l.hipotese){
+    ctxSec.style.display="block";
+    document.getElementById("d-context-grid").innerHTML=[
+      ["Fit E+ Wallet",l.fit||"—"],["Gatilho",l.gatilho||"—"],["Hipótese",l.hipotese||"—"],
+    ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
+  }else{
+    ctxSec.style.display="none";
+  }
 
   // other contacts at same empresa
   const others=LEADS.filter(x=>x.empresa===l.empresa&&x.id!==l.id);
@@ -1467,6 +1540,22 @@ function copyDraft(){
 function closeDrawer(){
   document.getElementById("scrim").classList.remove("open");
   document.getElementById("drawer").classList.remove("open");
+}
+
+async function setOwner(newOwnerId){
+  const id=_currentDrawerId;
+  const lead=LEADS.find(l=>l.id===id);
+  if(!lead)return;
+  const changes={owner_user_id:newOwnerId||null,updated_by:CURRENT_USER_ID};
+  Object.assign(lead,changes);
+  const {data,error}=await sb.from('leads').update(changes).eq('id',id).select('updated_at').single();
+  if(error){alert('Erro ao salvar responsável: '+error.message);return;}
+  // Sincroniza o updated_at local com o que o banco acabou de gravar — senão a
+  // próxima edição no mesmo drawer acha (errado) que outra pessoa mexeu no meio tempo.
+  if(data?.updated_at){lead.updated_at=data.updated_at;_drawerLoadedUpdatedAt=data.updated_at;}
+  const updBy=document.getElementById("d-updated-by");
+  if(updBy)updBy.textContent=`Atualizado por ${teamName(CURRENT_USER_ID)}`;
+  render();
 }
 
 // ── SIDEBAR (responsive off-canvas) ──────────────────────────────────────
@@ -1581,15 +1670,63 @@ function showView(v){
   curView=v;
   document.getElementById("view-pipeline").style.display=v==="pipeline"?"block":"none";
   document.getElementById("view-empresas").style.display=v==="empresas"?"block":"none";
+  document.getElementById("view-meudia").style.display=v==="meudia"?"block":"none";
   document.getElementById("nav-pipeline").classList.toggle("active",v==="pipeline");
   document.getElementById("nav-empresas").classList.toggle("active",v==="empresas");
+  document.getElementById("nav-meudia").classList.toggle("active",v==="meudia");
   if(v==="empresas")renderEmpresas();
+  else if(v==="meudia")renderMeuDia();
   else render();
   if(window.innerWidth<=900)closeSidebar();
 }
 
 document.getElementById("nav-pipeline").addEventListener("click",()=>showView("pipeline"));
 document.getElementById("nav-empresas").addEventListener("click",()=>showView("empresas"));
+document.getElementById("nav-meudia").addEventListener("click",()=>showView("meudia"));
+
+// ═══════════════════════════════════════════════════════════════════
+// MEU DIA — mesma base de dados do Pipeline, só que organizada por urgência
+// pessoal em vez de por etapa. "Pipeline serve pra enxergar, Meu dia serve
+// pra trabalhar" — não é um CRM separado, é um filtro sobre os mesmos leads.
+// ═══════════════════════════════════════════════════════════════════
+let _meuDiaScope="equipe";
+function setMeuDiaScope(scope){
+  _meuDiaScope=scope;
+  renderMeuDia();
+}
+function meuDiaRow(l,tag){
+  return`<div class="today-row ${tag}" onclick="openDrawer(${l.id})">
+    <div class="today-empresa">${escH(l.empresa)}</div>
+    <div class="today-contato">${avatarHtml(l.nome)}${escH(l.nome||"—")}</div>
+    ${badge(l.status)}
+    <div class="today-action">${escH(l.pd||"")}</div>
+    ${l.owner_user_id?`<span class="kcard-seg" style="flex-shrink:0">● ${escH(teamName(l.owner_user_id).split(" ")[0])}</span>`:""}
+    <div class="chev">›</div>
+  </div>`;
+}
+function meuDiaSection(title,ic,list,tag){
+  if(!list.length)return"";
+  return`<div class="section" style="margin-bottom:20px">
+    <div class="section-hdr"><h2>${ic} ${title}</h2><span class="cnt">${list.length}</span></div>
+    <div class="today-list">${list.map(l=>meuDiaRow(l,tag)).join("")}</div>
+  </div>`;
+}
+function renderMeuDia(){
+  document.getElementById("md-scope-equipe").className="btn-tbar"+(_meuDiaScope==="equipe"?" primary":"");
+  document.getElementById("md-scope-minha").className="btn-tbar"+(_meuDiaScope==="minha"?" primary":"");
+  const base=_meuDiaScope==="minha"?LEADS.filter(l=>l.owner_user_id===CURRENT_USER_ID):LEADS;
+  const atrasadas=base.filter(l=>isUrg(l)&&isOverdue(l));
+  const hoje=base.filter(l=>isUrg(l)&&l.pa===today());
+  const proximas=base.filter(l=>{const d=daysDiff(l.pa);return isUrg(l)&&d!==null&&d>0&&d<=3;});
+  const semAcao=base.filter(hasNoAction);
+  const html=
+    meuDiaSection("Atrasadas","🔴",atrasadas,"overdue")+
+    meuDiaSection("Hoje","🟡",hoje,"due")+
+    meuDiaSection("Próximos 3 dias","🔵",proximas,"")+
+    meuDiaSection("Sem próxima ação","⚪",semAcao,"");
+  document.getElementById("md-content").innerHTML=html||
+    `<div class="today-empty">${_meuDiaScope==="minha"?"Nada na sua fila agora. 🎉":"Nada pendente agora. 🎉"}</div>`;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // CONFIRMAR APOLLO + MÚLTIPLOS CONTATOS
@@ -1636,10 +1773,12 @@ async function confirmApollo() {
     val:    true,
     ua:     today(),
     pd:     'Email confirmado via Apollo — pronto para envio',
+    updated_by: CURRENT_USER_ID,
   };
   Object.assign(lead, changes);
-  const { error } = await sb.from('leads').update(changes).eq('id', id);
+  const { data, error } = await sb.from('leads').update(changes).eq('id', id).select('updated_at').single();
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
+  if (data?.updated_at) lead.updated_at = data.updated_at;
   const btn = document.querySelector('.apollo-btn');
   if (btn) { btn.textContent = '✅ Movido para Engajar!'; btn.disabled = true; }
   render();
@@ -1655,9 +1794,7 @@ async function markContactMade(channel) {
   btns.forEach(b => b.disabled = true);
 
   const hojeISO = today();
-  const paDate = new Date();
-  paDate.setDate(paDate.getDate() + 7);
-  const paISO = paDate.toISOString().split('T')[0];
+  const paISO = addDaysISO(7);
   const logLine = `${fmt(hojeISO)}: Contato feito via ${channel}, aguardando resposta.`;
 
   const changes = {
@@ -1668,9 +1805,11 @@ async function markContactMade(channel) {
     pa:     paISO,
     pd:     `Aguardar resposta — follow-up se não responder até ${fmt(paISO)}`,
     obs:    (lead.obs ? lead.obs + ' ' : '') + logLine,
+    updated_by: CURRENT_USER_ID,
   };
   Object.assign(lead, changes);
-  const { error } = await sb.from('leads').update(changes).eq('id', id);
+  const { data, error } = await sb.from('leads').update(changes).eq('id', id).select('updated_at').single();
+  if (data?.updated_at) lead.updated_at = data.updated_at;
   btns.forEach(b => b.disabled = false);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
   render();
@@ -1689,9 +1828,9 @@ function renderExtraContacts(leadId) {
   list.innerHTML = contacts.map((c, i) => `
     <div class="extra-contact-card">
       <div class="extra-contact-info">
-        <div class="extra-contact-name">${c.nome || '(sem nome)'}</div>
-        <div class="extra-contact-meta">${[c.cargo, c.email, c.tel].filter(Boolean).join(' · ')}</div>
-        ${c.li ? `<div class="extra-contact-meta" style="color:var(--accent)">🔗 ${c.li}</div>` : ''}
+        <div class="extra-contact-name">${escH(c.nome || '(sem nome)')}</div>
+        <div class="extra-contact-meta">${escH([c.cargo, c.email, c.tel].filter(Boolean).join(' · '))}</div>
+        ${c.li ? `<div class="extra-contact-meta" style="color:var(--accent)">🔗 ${escH(c.li)}</div>` : ''}
       </div>
       <button class="extra-contact-rm" onclick="removeExtraContact(${leadId},${c.id})" title="Remover">✕</button>
     </div>`).join('');
@@ -1814,6 +1953,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { showLogin(); return; }
+  // O login mapeia username -> username@emaiswallet.internal (ver usernameToEmail) —
+  // então dá pra recuperar o username de volta a partir do e-mail da sessão, sem
+  // precisar guardar isso em outro lugar.
+  CURRENT_USER_ID = (session.user?.email || '').split('@')[0] || null;
   const backoffs = [0, 2000, 5000, 10000];
   for (let i = 0; i < backoffs.length; i++) {
     if (backoffs[i]) {
@@ -1824,6 +1967,7 @@ async function boot() {
       await fetchAllData();
       showApp();
       render();
+      subscribeRealtime();
       return;
     } catch (e) {
       if (i === backoffs.length - 1) {
@@ -1831,6 +1975,29 @@ async function boot() {
       }
     }
   }
+}
+
+// Realtime: quando qualquer usuário muda um lead, todo mundo vê sem precisar
+// dar F5. Reação simples (refetch + re-render) em vez de merge fino — é
+// suficiente pro tamanho atual da base e evita bugs sutis de diff manual.
+let _realtimeSubscribed = false;
+let _realtimeDebounce = null;
+function subscribeRealtime(){
+  if (_realtimeSubscribed) return;
+  _realtimeSubscribed = true;
+  sb.channel('leads-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+      clearTimeout(_realtimeDebounce);
+      _realtimeDebounce = setTimeout(async () => {
+        try {
+          await fetchAllData();
+          if (curView === 'empresas') renderEmpresas();
+          else if (curView === 'meudia') renderMeuDia();
+          else render();
+        } catch (e) { /* falha silenciosa — a próxima ação do usuário já vai buscar dado fresco */ }
+      }, 800);
+    })
+    .subscribe();
 }
 
 document.getElementById('login-form')?.addEventListener('submit', async (ev) => {
@@ -1851,6 +2018,7 @@ boot();
 // ── ESTADO EDIÇÃO ─────────────────────────────────────────────────
 let _editingId = null;
 let _currentDrawerId = null;
+let _drawerLoadedUpdatedAt = null;
 
 function escH(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1919,6 +2087,18 @@ function toggleEditMode() {
       </div>
     </div>
     <div class="edit-section">
+      <div class="edit-stitle">Contexto comercial</div>
+      <div class="edit-row" style="grid-template-columns:1fr">
+        <label class="edit-lbl">Fit com E+ Wallet<input class="edit-inp" id="ef-fit" value="${escH(lead.fit||'')}" placeholder="Ex: Alto — possui equipe comercial própria"></label>
+      </div>
+      <div class="edit-row" style="grid-template-columns:1fr">
+        <label class="edit-lbl">Gatilho<input class="edit-inp" id="ef-gatilho" value="${escH(lead.gatilho||'')}" placeholder="Ex: Programa de incentivo / premiação"></label>
+      </div>
+      <div class="edit-row" style="grid-template-columns:1fr">
+        <label class="edit-lbl">Hipótese<input class="edit-inp" id="ef-hipotese" value="${escH(lead.hipotese||'')}" placeholder="Ex: Pode substituir premiação manual"></label>
+      </div>
+    </div>
+    <div class="edit-section">
       <div class="edit-stitle">Notas / Histórico</div>
       <textarea class="edit-inp" id="ef-obs" rows="7">${escT(lead.obs||'')}</textarea>
     </div>
@@ -1935,27 +2115,43 @@ async function saveLeadEdit() {
   const lead = LEADS.find(l => l.id === id);
   if (!lead) return;
 
+  // Concorrência otimista: se o registro mudou no banco desde que o drawer abriu,
+  // avisa em vez de sobrescrever silenciosamente o que outra pessoa acabou de salvar.
+  if (_drawerLoadedUpdatedAt) {
+    const { data: freshRows } = await sb.from('leads').select('updated_at').eq('id', id);
+    const freshUpdatedAt = freshRows && freshRows[0] && freshRows[0].updated_at;
+    if (freshUpdatedAt && freshUpdatedAt !== _drawerLoadedUpdatedAt) {
+      const reload = confirm('Este lead foi atualizado por outra pessoa enquanto você editava.\n\nOK = recarregar os dados atuais (suas alterações aqui serão perdidas).\nCancelar = salvar do jeito que está mesmo assim.');
+      if (reload) { cancelEdit(); await fetchAllData(); render(); openDrawer(id); return; }
+    }
+  }
+
   const g = eid => document.getElementById(eid);
   const changes = {
-    empresa: g('ef-empresa').value.trim() || lead.empresa,
-    seg:     g('ef-seg').value,
-    nome:    g('ef-nome').value.trim() || '—',
-    cargo:   g('ef-cargo').value.trim() || '—',
-    email:   g('ef-email').value.trim() || '—',
-    tel:     g('ef-tel').value.trim(),
-    canal:   g('ef-canal').value.trim(),
-    val:     g('ef-val').checked,
-    status:  g('ef-status').value,
-    pa:      g('ef-pa').value || null,
-    pd:      g('ef-pd').value.trim(),
-    obs:     g('ef-obs').value.trim(),
-    ua:      today(),
+    empresa:  g('ef-empresa').value.trim() || lead.empresa,
+    seg:      g('ef-seg').value,
+    nome:     g('ef-nome').value.trim() || '—',
+    cargo:    g('ef-cargo').value.trim() || '—',
+    email:    g('ef-email').value.trim() || '—',
+    tel:      g('ef-tel').value.trim(),
+    canal:    g('ef-canal').value.trim(),
+    val:      g('ef-val').checked,
+    status:   g('ef-status').value,
+    pa:       g('ef-pa').value || null,
+    pd:       g('ef-pd').value.trim(),
+    obs:      g('ef-obs').value.trim(),
+    fit:      g('ef-fit')?.value.trim() || null,
+    gatilho:  g('ef-gatilho')?.value.trim() || null,
+    hipotese: g('ef-hipotese')?.value.trim() || null,
+    ua:       today(),
+    updated_by: CURRENT_USER_ID,
   };
 
   Object.assign(lead, changes);
 
-  const { error } = await sb.from('leads').update(changes).eq('id', id);
+  const { data, error } = await sb.from('leads').update(changes).eq('id', id).select('updated_at').single();
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
+  if (data?.updated_at) lead.updated_at = data.updated_at;
 
   cancelEdit();
   render();
@@ -1988,6 +2184,12 @@ function openNewLeadModal() {
   if (more) more.style.display = 'none';
   const moreLbl = document.getElementById('nl-more-lbl');
   if (moreLbl) moreLbl.textContent = '➕ Mais informações (segmento, telefone, canal, notas)';
+  const ownerSel = document.getElementById('nl-owner');
+  if (ownerSel) {
+    ownerSel.innerHTML = '<option value="">Sem responsável</option>' +
+      TEAM.map(t => `<option value="${t.id}">${escH(t.nome)}${t.id===CURRENT_USER_ID?' (você)':''}</option>`).join('');
+    ownerSel.value = CURRENT_USER_ID || '';
+  }
 }
 
 function toggleNewLeadMore() {
@@ -2011,21 +2213,20 @@ function closeNewLeadModal() {
   if (canal) canal.value = 'LinkedIn';
   const status = document.getElementById('nl-status');
   if (status) status.value = 'apollo-pendente';
+  const owner = document.getElementById('nl-owner');
+  if (owner) owner.value = '';
 }
 
 async function saveNewLead() {
   const empresa = (document.getElementById('nl-empresa').value || '').trim();
   if (!empresa) { alert('Nome da empresa é obrigatório.'); return; }
 
-  // Busca o max id direto no banco — o array local pode estar incompleto
-  // (paginação) ou desatualizado em relação a inserts feitos por outros processos.
-  const { data: maxRows, error: maxErr } = await sb.from('leads').select('id').order('id', { ascending: false }).limit(1);
-  if (maxErr) { alert('Erro ao criar lead: ' + maxErr.message); return; }
-  const newId = (maxRows && maxRows.length ? maxRows[0].id : 0) + 1;
   const g = eid => (document.getElementById(eid) || {}).value || '';
 
+  // Sem "id" aqui de propósito: a coluna é identity no Postgres (gerada pelo
+  // banco), então não precisamos mais calcular/enviar o próximo id no cliente
+  // — isso fechava uma corrida real quando dois usuários criavam ao mesmo tempo.
   const lead = {
-    id:      newId,
     nome:    g('nl-nome').trim() || '—',
     empresa: empresa,
     cargo:   g('nl-cargo').trim() || '—',
@@ -2040,15 +2241,17 @@ async function saveNewLead() {
     pd:      g('nl-pd').trim() || 'Primeiro contato',
     val:     false,
     obs:     g('nl-obs').trim() || '',
+    owner_user_id: g('nl-owner') || null,
+    updated_by: CURRENT_USER_ID,
   };
 
-  const { error } = await sb.from('leads').insert(lead);
+  const { data, error } = await sb.from('leads').insert(lead).select().single();
   if (error) { alert('Erro ao criar lead: ' + error.message); return; }
-  LEADS.push(lead);
+  LEADS.push(data);
 
   closeNewLeadModal();
   render();
-  setTimeout(() => openDrawer(newId), 100);
+  setTimeout(() => openDrawer(data.id), 100);
 }
 
 // ── EXPORTAR CRM ──────────────────────────────────────────────────
