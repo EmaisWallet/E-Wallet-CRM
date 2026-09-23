@@ -715,6 +715,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <button class="side-item" id="nav-empresas" type="button">
         <span class="lbl"><span class="ic">🏢</span>Empresas</span>
       </button>
+      <button class="side-item" id="nav-dashboard" type="button" style="display:none">
+        <span class="lbl"><span class="ic">📈</span>Dashboard</span>
+      </button>
     </div>
 
     <div class="side-block">
@@ -829,6 +832,14 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
         </div>
       </div>
       <div id="md-content"></div>
+    </div>
+
+    <div id="view-dashboard" style="display:none">
+      <div class="section-hdr" style="margin-bottom:14px">
+        <h2>Dashboard</h2>
+        <span class="hint">— consolidado da equipe, atualiza sozinho</span>
+      </div>
+      <div id="dash-content"></div>
     </div>
 
   </main>
@@ -1112,6 +1123,8 @@ const TEAM = [
 ];
 function teamName(id){ return TEAM.find(t=>t.id===id)?.nome || id || ""; }
 let CURRENT_USER_ID = null;
+const ADMIN_USER_ID = "leonardo";
+let CONTACT_LOG = [];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let cSeg="todos", cStatus="todos", q="";
@@ -1671,11 +1684,14 @@ function showView(v){
   document.getElementById("view-pipeline").style.display=v==="pipeline"?"block":"none";
   document.getElementById("view-empresas").style.display=v==="empresas"?"block":"none";
   document.getElementById("view-meudia").style.display=v==="meudia"?"block":"none";
+  document.getElementById("view-dashboard").style.display=v==="dashboard"?"block":"none";
   document.getElementById("nav-pipeline").classList.toggle("active",v==="pipeline");
   document.getElementById("nav-empresas").classList.toggle("active",v==="empresas");
   document.getElementById("nav-meudia").classList.toggle("active",v==="meudia");
+  document.getElementById("nav-dashboard").classList.toggle("active",v==="dashboard");
   if(v==="empresas")renderEmpresas();
   else if(v==="meudia")renderMeuDia();
+  else if(v==="dashboard")renderDashboard();
   else render();
   if(window.innerWidth<=900)closeSidebar();
 }
@@ -1683,6 +1699,7 @@ function showView(v){
 document.getElementById("nav-pipeline").addEventListener("click",()=>showView("pipeline"));
 document.getElementById("nav-empresas").addEventListener("click",()=>showView("empresas"));
 document.getElementById("nav-meudia").addEventListener("click",()=>showView("meudia"));
+document.getElementById("nav-dashboard").addEventListener("click",()=>showView("dashboard"));
 
 // ═══════════════════════════════════════════════════════════════════
 // MEU DIA — mesma base de dados do Pipeline, só que organizada por urgência
@@ -1719,13 +1736,63 @@ function renderMeuDia(){
   const hoje=base.filter(l=>isUrg(l)&&l.pa===today());
   const proximas=base.filter(l=>{const d=daysDiff(l.pa);return isUrg(l)&&d!==null&&d>0&&d<=3;});
   const semAcao=base.filter(hasNoAction);
+  // "Minhas empresas" — só no escopo pessoal: a carteira INTEIRA do usuário,
+  // sem filtrar por urgência (diferente das seções acima). É a resposta pra
+  // "quais empresas eu sou responsável", não só "o que está pendente".
+  const minhasEmpresas=_meuDiaScope==="minha"
+    ?[...LEADS].filter(l=>l.owner_user_id===CURRENT_USER_ID).sort((a,b)=>a.empresa.localeCompare(b.empresa))
+    :[];
   const html=
     meuDiaSection("Atrasadas","🔴",atrasadas,"overdue")+
     meuDiaSection("Hoje","🟡",hoje,"due")+
     meuDiaSection("Próximos 3 dias","🔵",proximas,"")+
-    meuDiaSection("Sem próxima ação","⚪",semAcao,"");
+    meuDiaSection("Sem próxima ação","⚪",semAcao,"")+
+    meuDiaSection("Minhas empresas","🗂️",minhasEmpresas,"");
   document.getElementById("md-content").innerHTML=html||
     `<div class="today-empty">${_meuDiaScope==="minha"?"Nada na sua fila agora. 🎉":"Nada pendente agora. 🎉"}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DASHBOARD ADMIN (só Leonardo) — consolidado por usuário, alimentado pelo
+// contact_log (Bundle C) + owner_user_id. Atualiza sozinho via Realtime
+// (ver subscribeRealtime), sem precisar dar F5.
+// ═══════════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const el=document.getElementById("dash-content");
+  if(!el)return;
+  const hojeISO=today();
+  const rows=TEAM.map(t=>{
+    const minhasEmpresas=LEADS.filter(l=>l.owner_user_id===t.id).length;
+    const contatosTotal=CONTACT_LOG.filter(c=>c.user_id===t.id).length;
+    const contatosHoje=CONTACT_LOG.filter(c=>c.user_id===t.id&&(c.created_at||"").slice(0,10)===hojeISO).length;
+    return{nome:t.nome,minhasEmpresas,contatosTotal,contatosHoje};
+  });
+  const semUsuario=CONTACT_LOG.filter(c=>!TEAM.some(t=>t.id===c.user_id)).length;
+  el.innerHTML=`
+    <div style="background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:16px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--surface-2);text-align:left">
+            <th style="padding:11px 16px">Usuário</th>
+            <th style="padding:11px 16px">Empresas sob responsabilidade</th>
+            <th style="padding:11px 16px">Contatos feitos (total)</th>
+            <th style="padding:11px 16px">Contatos feitos hoje</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`<tr style="border-top:1px solid var(--border)">
+            <td style="padding:11px 16px;font-weight:600">${escH(r.nome)}</td>
+            <td style="padding:11px 16px">${r.minhasEmpresas}</td>
+            <td style="padding:11px 16px">${r.contatosTotal}</td>
+            <td style="padding:11px 16px">${r.contatosHoje}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-3)">
+      Contagem de "contatos feitos" começou a valer a partir de hoje (23/09/2026) — ações anteriores não entram, porque não existia esse registro antes.
+      ${semUsuario?` ${semUsuario} contato(s) sem usuário reconhecido não entraram na tabela.`:""}
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1812,6 +1879,16 @@ async function markContactMade(channel) {
   if (data?.updated_at) lead.updated_at = data.updated_at;
   btns.forEach(b => b.disabled = false);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
+  // Log pro dashboard admin (Bundle C) — não bloqueia a ação principal se falhar,
+  // o lead já foi movido com sucesso de qualquer forma.
+  try {
+    const { data: logRow } = await sb.from('contact_log')
+      .insert({ lead_id: id, user_id: CURRENT_USER_ID, channel })
+      .select().single();
+    if (logRow) CONTACT_LOG.push(logRow);
+  } catch (e) { /* dashboard só fica sem esse registro; ação principal já salvou */ }
+
   render();
   closeDrawer();
 }
@@ -1906,9 +1983,12 @@ async function fetchAllRows(table) {
 }
 
 async function fetchAllData() {
-  const [leads, contacts] = await Promise.all([
+  const [leads, contacts, contactLog] = await Promise.all([
     fetchAllRows('leads'),
     fetchAllRows('lead_contacts'),
+    // contact_log é novo (Bundle C) — se a tabela ainda não existir por algum
+    // motivo, não deixa o boot inteiro quebrar por causa do dashboard.
+    fetchAllRows('contact_log').catch(() => []),
   ]);
   LEADS.length = 0;
   LEADS.push(...leads);
@@ -1917,6 +1997,7 @@ async function fetchAllData() {
     if (!CONTACTS[c.lead_id]) CONTACTS[c.lead_id] = [];
     CONTACTS[c.lead_id].push(c);
   });
+  CONTACT_LOG = contactLog || [];
 }
 
 function usernameToEmail(username) {
@@ -1957,6 +2038,10 @@ async function boot() {
   // então dá pra recuperar o username de volta a partir do e-mail da sessão, sem
   // precisar guardar isso em outro lugar.
   CURRENT_USER_ID = (session.user?.email || '').split('@')[0] || null;
+  if (CURRENT_USER_ID === ADMIN_USER_ID) {
+    const navDash = document.getElementById('nav-dashboard');
+    if (navDash) navDash.style.display = 'flex';
+  }
   const backoffs = [0, 2000, 5000, 10000];
   for (let i = 0; i < backoffs.length; i++) {
     if (backoffs[i]) {
@@ -1982,21 +2067,26 @@ async function boot() {
 // suficiente pro tamanho atual da base e evita bugs sutis de diff manual.
 let _realtimeSubscribed = false;
 let _realtimeDebounce = null;
+function realtimeRefresh(){
+  clearTimeout(_realtimeDebounce);
+  _realtimeDebounce = setTimeout(async () => {
+    try {
+      await fetchAllData();
+      if (curView === 'empresas') renderEmpresas();
+      else if (curView === 'meudia') renderMeuDia();
+      else if (curView === 'dashboard') renderDashboard();
+      else render();
+    } catch (e) { /* falha silenciosa — a próxima ação do usuário já vai buscar dado fresco */ }
+  }, 800);
+}
 function subscribeRealtime(){
   if (_realtimeSubscribed) return;
   _realtimeSubscribed = true;
+  // Uma assinatura só cobrindo leads e contact_log — é o que faz o Dashboard
+  // (e o resto da UI) se atualizar sozinho conforme a equipe usa o CRM.
   sb.channel('leads-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
-      clearTimeout(_realtimeDebounce);
-      _realtimeDebounce = setTimeout(async () => {
-        try {
-          await fetchAllData();
-          if (curView === 'empresas') renderEmpresas();
-          else if (curView === 'meudia') renderMeuDia();
-          else render();
-        } catch (e) { /* falha silenciosa — a próxima ação do usuário já vai buscar dado fresco */ }
-      }, 800);
-    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, realtimeRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_log' }, realtimeRefresh)
     .subscribe();
 }
 
