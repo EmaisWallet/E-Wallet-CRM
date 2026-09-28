@@ -363,6 +363,21 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
 .cm-btn{flex:1;padding:9px 6px;border-radius:var(--radius-sm);border:none;background:#059669;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:5px}
 .cm-btn:hover{opacity:.88}
 .cm-btn:disabled{opacity:.5;cursor:default}
+.cl-form{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:8px;margin-bottom:8px}
+.cl-lbl{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--text-3)}
+.cl-lbl input,.cl-lbl select{padding:7px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12.5px;font-family:inherit}
+.cl-preview{font-size:12px;color:var(--text-2);margin-bottom:8px;min-height:16px}
+.cl-save{width:100%;padding:9px}
+.cl-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.cl-row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:7px 9px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border)}
+.cl-row .cl-n{font-weight:700;color:var(--text-3);min-width:24px}
+.cl-row .cl-txt{flex:1}
+.cl-row .cl-ic{background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.7}
+.cl-row .cl-ic:hover{opacity:1}
+.cl-row.editing{flex-wrap:wrap}
+.cl-row.editing input,.cl-row.editing select{padding:5px 6px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit}
+.cl-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--text-3);margin:0 0 8px}
+.st-emoji{font-size:15px;margin-right:2px}
 
 /* ===== EXTRA CONTATOS ===== */
 .extra-contacts-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
@@ -807,6 +822,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
           <span class="hint">— arraste para ver todas as colunas</span>
         </div>
         <div class="kanban-wrap">
+          <div class="cl-legend">
+            <span>🆕 sem contato</span><span>⏳ aguardando resposta</span><span>🔔 follow-up hoje</span><span>🔥 follow-up atrasado</span><span>📅 reunião marcada</span><span>🤝 reunião feita</span><span>✅ ganho</span><span>❌ perdido</span>
+          </div>
           <div class="kanban" id="kanban"></div>
         </div>
       </section>
@@ -862,6 +880,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       </div>
       <div class="modal-row">
         <label class="mlbl full">Email<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
+      </div>
+      <div class="modal-row">
+        <label class="mlbl full">LinkedIn (link do perfil)<input id="nl-linkedin" type="url" placeholder="https://www.linkedin.com/in/perfil"></label>
       </div>
       <div class="modal-row">
         <label class="mlbl">Próxima ação<select id="nl-status">
@@ -969,12 +990,17 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
   </div>
 
   <div class="d-contact-made">
-    <div class="d-contact-made-lbl">✅ Contato feito — mover para Aguardando</div>
-    <div class="d-contact-made-btns">
-      <button class="cm-btn" onclick="markContactMade('Email')">📧 Email</button>
-      <button class="cm-btn" onclick="markContactMade('WhatsApp')">💬 WhatsApp</button>
-      <button class="cm-btn" onclick="markContactMade('Ligação')">📞 Ligação</button>
+    <div class="d-contact-made-lbl">✅ Registrar contato feito</div>
+    <div class="cl-form">
+      <label class="cl-lbl">Data<input type="date" id="cl-date" onchange="updateContactPreview()"></label>
+      <label class="cl-lbl">Hora<input type="time" id="cl-time" onchange="updateContactPreview()"></label>
+      <label class="cl-lbl">Meio<select id="cl-channel" onchange="updateContactPreview()">
+        <option>LinkedIn</option><option>Email</option><option>WhatsApp</option><option>Ligação</option><option>Reunião</option><option>Outro</option>
+      </select></label>
     </div>
+    <div class="cl-preview" id="cl-preview"></div>
+    <button class="cm-btn cl-save" onclick="addContact()">➕ Registrar contato</button>
+    <div class="cl-list" id="cl-list"></div>
   </div>
 
   <div id="d-apollo-section" style="display:none">
@@ -1125,6 +1151,7 @@ function teamName(id){ return TEAM.find(t=>t.id===id)?.nome || id || ""; }
 let CURRENT_USER_ID = null;
 const ADMIN_USER_ID = "leonardo";
 let CONTACT_LOG = [];
+let _editingContactId = null;
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let cSeg="todos", cStatus="todos", q="";
@@ -1140,9 +1167,58 @@ const addDaysISO=(days)=>{
 };
 const fmt=d=>(!d||d==="—")?"—":d.split("-").reverse().join("/");
 const badge=(s)=>{const c=SC[s]||{lbl:s,cls:"",ic:""};return`<span class="badge ${c.cls}"><span class="dot-b"></span>${c.lbl}</span>`};
-const isUrg=(l)=>SC[l.status]?.urg||false;
+// "aguardando" só vira urgente quando o prazo do follow-up chega (timer de contato).
+const isUrg=(l)=>SC[l.status]?.urg||(l.status==="aguardando"&&isHoje(l))||false;
 const isHoje=(l)=>l.pa&&l.pa!=="—"&&l.pa<=today();
 const isOverdue=(l)=>l.pa&&l.pa!=="—"&&l.pa<today();
+
+// ── CONTATOS + TIMER ──────────────────────────────────────────────────────
+// Intervalo (em dias úteis) até o próximo contato, conforme o nº do contato feito.
+// Ajuste aqui se a cadência do time mudar.
+const CADENCE=[3,4,5,7];            // 1º, 2º, 3º, 4º+ contato
+const FAST_CHANNELS=["WhatsApp","Ligação"]; // resposta costuma ser mais rápida: -1 dia útil
+const CUTOFF_HOUR=18;               // contato depois desse horário conta como o dia útil seguinte
+const CONTACT_CHANNELS=["LinkedIn","Email","WhatsApp","Ligação","Reunião","Outro"];
+const CH_ICON={LinkedIn:"💼",Email:"📧",WhatsApp:"💬","Ligação":"📞","Reunião":"🤝",Outro:"•"};
+const isoToDate=iso=>new Date(iso+"T12:00:00Z");
+const dateToIso=d=>d.toISOString().slice(0,10); // d sempre em 12:00 UTC, sem risco de virar o dia
+const isBizDay=d=>{const w=d.getUTCDay();return w!==0&&w!==6;};
+function addBizDays(iso,n){
+  const d=isoToDate(iso);
+  while(n>0){d.setUTCDate(d.getUTCDate()+1);if(isBizDay(d))n--;}
+  return dateToIso(d);
+}
+function nextActionFor(dateISO,timeStr,nth,channel){
+  let start=isoToDate(dateISO);
+  const late=timeStr&&parseInt(timeStr.slice(0,2),10)>=CUTOFF_HOUR;
+  if(late)start.setUTCDate(start.getUTCDate()+1);
+  while(!isBizDay(start))start.setUTCDate(start.getUTCDate()+1);
+  let days=CADENCE[Math.min(nth,CADENCE.length)-1];
+  if(FAST_CHANNELS.includes(channel))days=Math.max(1,days-1);
+  const res=addBizDays(dateToIso(start),days);
+  return res<today()?today():res;
+}
+const dateSP=ts=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date(ts));
+const nowTimeSP=()=>new Intl.DateTimeFormat("en-GB",{timeZone:"America/Sao_Paulo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
+const contactKey=c=>(c.contacted_on||dateSP(c.created_at))+" "+((c.contacted_time||"00:00").slice(0,5));
+function leadContacts(leadId){
+  return CONTACT_LOG.filter(c=>c.lead_id===leadId).sort((a,b)=>{const ka=contactKey(a),kb=contactKey(b);return ka<kb?-1:ka>kb?1:(a.id>b.id?1:-1);});
+}
+// Emoji de situação — derivado (contatos + prazo + status), sem coluna própria.
+function contactEmoji(l){
+  const st=l.status;
+  if(st==="ganho")return{e:"✅",t:"Ganho"};
+  if(st==="perdido")return{e:"❌",t:"Perdido"};
+  if(st==="reuniao")return{e:"🤝",t:"Reunião realizada"};
+  if(st==="agendamento")return{e:"📅",t:"Reunião marcada"};
+  if(st==="proposta")return{e:"📄",t:"Proposta enviada"};
+  if(l.pa&&l.pa!=="—"){
+    if(isOverdue(l))return{e:"🔥",t:"Follow-up atrasado"};
+    if(l.pa===today())return{e:"🔔",t:"Follow-up para hoje"};
+  }
+  const has=leadContacts(l.id).length>0||st==="aguardando"||st==="follow-up";
+  return has?{e:"⏳",t:"Contato feito — aguardando resposta"}:{e:"🆕",t:"Ainda sem contato"};
+}
 
 function initials(name){
   if(!name||name==="—")return"?";
@@ -1383,7 +1459,7 @@ function renderKanban(){
       ].filter(Boolean);
       return`<div class="${cardClass(l)}" onclick="openDrawer(${l.id})">
         <div class="kcard-top">
-          <div class="kcard-empresa">${escH(l.empresa)}</div>
+          <div class="kcard-empresa"><span class="st-emoji" title="${contactEmoji(l).t}">${contactEmoji(l).e}</span>${escH(l.empresa)}</div>
           ${primaryAlert}
         </div>
         ${secondarySignals.length?`<div class="kcard-signals">${secondarySignals.join(" · ")}</div>`:""}
@@ -1423,11 +1499,16 @@ function openDrawer(id){
   // Reset edit mode se estava aberto
   if(_editingId!==null){_editingId=null;const ep=document.getElementById("d-edit-panel");if(ep){ep.innerHTML="";ep.style.display="none";}const vs=document.getElementById("d-view-sections");if(vs)vs.style.display="block";const eb=document.getElementById("d-edit-btn");if(eb){eb.innerHTML="\u270F\uFE0F Editar lead";eb.className="d-edit-btn";}}
   document.querySelectorAll('.cm-btn').forEach(b => b.disabled = false);
+  _editingContactId = null;
+  document.getElementById("cl-date").value = today();
+  document.getElementById("cl-time").value = nowTimeSP();
+  document.getElementById("cl-channel").value = CONTACT_CHANNELS.includes(l.canal) ? l.canal : "LinkedIn";
+  renderContactLog(l);
   document.getElementById("d-avatar").outerHTML=avatarHtml(l.nome,"lg").replace('class="avatar lg"','id="d-avatar" class="avatar lg"');
   document.getElementById("d-empresa").textContent=l.empresa;
   const seg=SEG[l.seg]||{ic:""};
   document.getElementById("d-seg").textContent=`${seg.ic} ${l.seg}`;
-  document.getElementById("d-badges").innerHTML=badge(l.status)+`<span class="badge" style="background:var(--surface-2);color:var(--text-2)">${escH(l.canal)}</span>`+
+  document.getElementById("d-badges").innerHTML=`<span class="st-emoji" title="${contactEmoji(l).t}" style="font-size:20px">${contactEmoji(l).e}</span>`+badge(l.status)+`<span class="badge" style="background:var(--surface-2);color:var(--text-2)">${escH(l.canal)}</span>`+
     (l.val?`<span class="badge" style="background:var(--green-soft);color:var(--green-soft-text)">✓ LinkedIn validado</span>`:`<span class="badge" style="background:var(--gray-soft);color:var(--text-3)">⚠ Não validado</span>`);
 
   // Responsável + concorrência: guarda o updated_at que carregamos agora pra comparar
@@ -1450,7 +1531,8 @@ function openDrawer(id){
     ["Contato",l.nome||"—"],["Cargo",l.cargo||"—"],
     ["Email",l.email||"—"],["Telefone",l.tel||"—"],
     ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
-  ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
+  ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("")+
+  `<div class="d-field"><span class="fl">LinkedIn</span><span class="fv">${safeLinkedin(l.linkedin)?`<a href="${escH(safeLinkedin(l.linkedin))}" target="_blank" rel="noopener noreferrer">Abrir perfil ↗</a>`:"—"}</span></div>`;
 
   // Contexto comercial — só mostra a seção se algum dos 3 campos tiver conteúdo,
   // pra não poluir o drawer de leads antigos que nunca preencheram isso.
@@ -1852,45 +1934,147 @@ async function confirmApollo() {
   setTimeout(() => { closeDrawer(); openDrawer(id); }, 500);
 }
 
-async function markContactMade(channel) {
-  const id = _currentDrawerId;
-  const lead = LEADS.find(l => l.id === id);
-  if (!lead) return;
+// ── CONTATOS REALIZADOS (data/hora/meio) + TIMER DO PRÓXIMO CONTATO ─────────
+// Regras: só o contato mais recente mexe no prazo (pa). Editar/registrar um contato
+// que já tem outro posterior é retificação/backfill e NÃO reinicia o timer.
+const PRE_MEETING=["no-radar","apollo-pendente","email-preparado","reengajamento","aguardando","follow-up","nao-entregue"];
 
-  const btns = document.querySelectorAll('.cm-btn');
-  btns.forEach(b => b.disabled = true);
+function safeLinkedin(u){
+  if(!u)return"";
+  u=String(u).trim();
+  if(!u)return"";
+  if(!/^https?:\/\//i.test(u))u="https://"+u;
+  try{return /(^|\.)linkedin\.com$/i.test(new URL(u).hostname)?u:"";}catch(e){return"";}
+}
 
-  const hojeISO = today();
-  const paISO = addDaysISO(7);
-  const logLine = `${fmt(hojeISO)}: Contato feito via ${channel}, aguardando resposta.`;
+function timerChanges(lead,list){
+  if(!list.length)return{pa:today(),pd:"Primeiro contato"};
+  const last=list[list.length-1],n=list.length;
+  const pa=nextActionFor(last.contacted_on||dateSP(last.created_at),last.contacted_time,n,last.channel);
+  const ch={pa,pd:`Follow-up após ${n}º contato (${last.channel}) — até ${fmt(pa)}`};
+  if(PRE_MEETING.includes(lead.status))ch.status=n===1?"aguardando":"follow-up";
+  return ch;
+}
 
-  const changes = {
-    status: 'aguardando',
-    canal:  channel,
-    pc:     lead.pc || hojeISO,
-    ua:     hojeISO,
-    pa:     paISO,
-    pd:     `Aguardar resposta — follow-up se não responder até ${fmt(paISO)}`,
-    obs:    (lead.obs ? lead.obs + ' ' : '') + logLine,
-    updated_by: CURRENT_USER_ID,
-  };
-  Object.assign(lead, changes);
-  const { data, error } = await sb.from('leads').update(changes).eq('id', id).select('updated_at').single();
-  if (data?.updated_at) lead.updated_at = data.updated_at;
-  btns.forEach(b => b.disabled = false);
-  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+async function saveLeadChanges(lead,changes){
+  changes.ua=today();
+  changes.updated_by=CURRENT_USER_ID;
+  Object.assign(lead,changes);
+  const{data,error}=await sb.from('leads').update(changes).eq('id',lead.id).select('updated_at').single();
+  if(data?.updated_at)lead.updated_at=data.updated_at;
+  return error;
+}
 
-  // Log pro dashboard admin (Bundle C) — não bloqueia a ação principal se falhar,
-  // o lead já foi movido com sucesso de qualquer forma.
-  try {
-    const { data: logRow } = await sb.from('contact_log')
-      .insert({ lead_id: id, user_id: CURRENT_USER_ID, channel })
-      .select().single();
-    if (logRow) CONTACT_LOG.push(logRow);
-  } catch (e) { /* dashboard só fica sem esse registro; ação principal já salvou */ }
+function updateContactPreview(){
+  const l=LEADS.find(x=>x.id===_currentDrawerId);
+  const el=document.getElementById("cl-preview");
+  if(!l||!el)return;
+  const date=document.getElementById("cl-date").value;
+  const time=document.getElementById("cl-time").value;
+  const ch=document.getElementById("cl-channel").value;
+  if(!date){el.textContent="";return;}
+  const list=leadContacts(l.id),last=list[list.length-1];
+  if(last&&date+" "+(time||"00:00")<contactKey(last)){
+    el.textContent="↩ Anterior ao último contato registrado — não altera o prazo do próximo contato.";return;
+  }
+  el.textContent=`⏳ Próximo contato sugerido: ${fmt(nextActionFor(date,time,list.length+1,ch))}`;
+}
 
-  render();
-  closeDrawer();
+function renderContactLog(lead){
+  const list=leadContacts(lead.id);
+  const box=document.getElementById("cl-list");
+  box.innerHTML=list.map((c,i)=>{
+    const d=c.contacted_on||dateSP(c.created_at),t=(c.contacted_time||"").slice(0,5);
+    const cid=escH(String(c.id)),who=c.user_id?teamName(c.user_id).split(" ")[0]:"";
+    if(String(c.id)===String(_editingContactId)){
+      return`<div class="cl-row editing"><span class="cl-n">#${i+1}</span>
+        <input type="date" id="cle-date" value="${d}"><input type="time" id="cle-time" value="${t}">
+        <select id="cle-channel">${CONTACT_CHANNELS.map(x=>`<option ${x===c.channel?"selected":""}>${x}</option>`).join("")}</select>
+        <button class="cl-ic" title="Salvar" onclick="saveContactEdit('${cid}')">💾</button>
+        <button class="cl-ic" title="Cancelar" onclick="cancelContactEdit()">✕</button></div>`;
+    }
+    return`<div class="cl-row"><span class="cl-n">#${i+1}</span>
+      <span class="cl-txt">${fmt(d)}${t?" às "+t:""} · ${CH_ICON[c.channel]||""} ${escH(c.channel||"—")}${who?` <span style="color:var(--text-3)">· ${escH(who)}</span>`:""}</span>
+      <button class="cl-ic" title="Editar data/meio" onclick="startContactEdit('${cid}')">✏️</button>
+      <button class="cl-ic" title="Excluir" onclick="deleteContact('${cid}')">🗑️</button></div>`;
+  }).join("")||`<div style="font-size:12px;color:var(--text-3)">Nenhum contato registrado ainda.</div>`;
+  updateContactPreview();
+}
+
+async function addContact(){
+  const lead=LEADS.find(l=>l.id===_currentDrawerId);
+  if(!lead)return;
+  const date=document.getElementById("cl-date").value;
+  const time=document.getElementById("cl-time").value||null;
+  const channel=document.getElementById("cl-channel").value;
+  if(!date){alert("Informe a data do contato.");return;}
+  if(date>today()){alert("A data do contato não pode estar no futuro.");return;}
+  const btn=document.querySelector('.cl-save');btn.disabled=true;
+  const prev=leadContacts(lead.id),last=prev[prev.length-1];
+  const isLatest=!last||date+" "+(time||"00:00")>=contactKey(last);
+
+  const{data:row,error}=await sb.from('contact_log')
+    .insert({lead_id:lead.id,user_id:CURRENT_USER_ID,channel,contacted_on:date,contacted_time:time})
+    .select().single();
+  btn.disabled=false;
+  if(error||!row){alert("Erro ao registrar contato: "+(error?.message||"sem resposta")+"\n\nSe a mensagem citar 'contacted_on', rode a migration 2026-09-28_01 no Supabase.");return;}
+  CONTACT_LOG.push(row);
+
+  const list=leadContacts(lead.id);
+  const earliest=list[0].contacted_on||dateSP(list[0].created_at);
+  const changes={obs:(lead.obs?lead.obs+" ":"")+`${fmt(date)}: Contato #${list.length} via ${channel}.`};
+  if(!lead.pc||lead.pc>earliest)changes.pc=earliest;
+  if(isLatest){changes.canal=channel;Object.assign(changes,timerChanges(lead,list));}
+  const err=await saveLeadChanges(lead,changes);
+  if(err)alert("Contato salvo, mas falhou ao atualizar o lead: "+err.message);
+  render();openDrawer(lead.id);
+}
+
+function startContactEdit(cid){
+  _editingContactId=cid;
+  const l=LEADS.find(x=>x.id===_currentDrawerId);if(l)renderContactLog(l);
+}
+function cancelContactEdit(){
+  _editingContactId=null;
+  const l=LEADS.find(x=>x.id===_currentDrawerId);if(l)renderContactLog(l);
+}
+
+async function saveContactEdit(cid){
+  const lead=LEADS.find(l=>l.id===_currentDrawerId);
+  if(!lead)return;
+  const date=document.getElementById("cle-date").value;
+  const time=document.getElementById("cle-time").value||null;
+  const channel=document.getElementById("cle-channel").value;
+  if(!date){alert("Informe a data do contato.");return;}
+  if(date>today()){alert("A data do contato não pode estar no futuro.");return;}
+  const before=leadContacts(lead.id);
+  const wasLatest=String(before[before.length-1]?.id)===String(cid);
+  const{data,error}=await sb.from('contact_log').update({contacted_on:date,contacted_time:time,channel}).eq('id',cid).select();
+  if(error||!data||!data.length){alert("Erro ao editar contato: "+(error?.message||"sem permissão (rode a migration 2026-09-28_01)"));return;}
+  const row=CONTACT_LOG.find(c=>String(c.id)===String(cid));
+  if(row)Object.assign(row,data[0]);
+  _editingContactId=null;
+  // Retificação (já existe contato posterior) não mexe no prazo; só o mais recente recalcula.
+  if(wasLatest){
+    const err=await saveLeadChanges(lead,{canal:channel,...timerChanges(lead,leadContacts(lead.id))});
+    if(err)alert("Contato editado, mas falhou ao atualizar o lead: "+err.message);
+  }
+  render();openDrawer(lead.id);
+}
+
+async function deleteContact(cid){
+  const lead=LEADS.find(l=>l.id===_currentDrawerId);
+  if(!lead||!confirm("Excluir este registro de contato?"))return;
+  const before=leadContacts(lead.id);
+  const wasLatest=String(before[before.length-1]?.id)===String(cid);
+  const{data,error}=await sb.from('contact_log').delete().eq('id',cid).select();
+  if(error||!data||!data.length){alert("Erro ao excluir contato: "+(error?.message||"sem permissão (rode a migration 2026-09-28_01)"));return;}
+  CONTACT_LOG=CONTACT_LOG.filter(c=>String(c.id)!==String(cid));
+  if(wasLatest){
+    const err=await saveLeadChanges(lead,timerChanges(lead,leadContacts(lead.id)));
+    if(err)alert("Contato excluído, mas falhou ao atualizar o lead: "+err.message);
+  }
+  render();openDrawer(lead.id);
 }
 
 function lsGetContacts(leadId) {
@@ -2163,6 +2347,9 @@ function toggleEditMode() {
       </div>
       <div class="edit-row">
         <label class="edit-lbl">Canal<input class="edit-inp" id="ef-canal" value="${escH(lead.canal||'')}"></label>
+        <label class="edit-lbl">LinkedIn (link)<input class="edit-inp" id="ef-linkedin" value="${escH(lead.linkedin||'')}" placeholder="https://www.linkedin.com/in/perfil"></label>
+      </div>
+      <div class="edit-row">
         <label class="edit-check-row"><input type="checkbox" id="ef-val" ${lead.val?'checked':''}> LinkedIn validado</label>
       </div>
     </div>
@@ -2239,6 +2426,14 @@ async function saveLeadEdit() {
     ua:       today(),
     updated_by: CURRENT_USER_ID,
   };
+
+  // linkedin só entra no UPDATE se mudou (evita erro caso a coluna ainda não exista no banco)
+  const liRaw = g('ef-linkedin').value.trim();
+  if (liRaw !== (lead.linkedin || '')) {
+    const li = safeLinkedin(liRaw);
+    if (liRaw && !li) { alert('O link do LinkedIn precisa ser de linkedin.com.'); return; }
+    changes.linkedin = li || null;
+  }
 
   Object.assign(lead, changes);
 
@@ -2321,7 +2516,7 @@ function closeNewLeadModal() {
   const modal = document.getElementById('modal-new-lead');
   if (modal) modal.style.display = 'none';
   // Limpar campos
-  ['nl-empresa','nl-nome','nl-cargo','nl-email','nl-tel','nl-pd','nl-obs'].forEach(id => {
+  ['nl-empresa','nl-nome','nl-cargo','nl-email','nl-linkedin','nl-tel','nl-pd','nl-obs'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -2360,6 +2555,13 @@ async function saveNewLead() {
     owner_user_id: g('nl-owner') || null,
     updated_by: CURRENT_USER_ID,
   };
+
+  const liRaw = g('nl-linkedin').trim();
+  if (liRaw) {
+    const li = safeLinkedin(liRaw);
+    if (!li) { alert('O link do LinkedIn precisa ser de linkedin.com.'); return; }
+    lead.linkedin = li;
+  }
 
   const { data, error } = await sb.from('leads').insert(lead).select().single();
   if (error) { alert('Erro ao criar lead: ' + error.message); return; }
