@@ -695,6 +695,94 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
   flex-shrink: 0;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR AMARELO OURO — identidade E+ (15/10/2026)
+══════════════════════════════════════════════════════════════ */
+:root{ --gold:#FFBF00; --gold-deep:#F2B300; --gold-ink:#1F1A0E; --gold-ink-2:rgba(31,26,14,.68); }
+.app{ grid-template-columns: 236px 1fr; }
+.sidebar{
+  background: linear-gradient(180deg, #FFC81F 0%, var(--gold) 45%, var(--gold-deep) 100%);
+  box-shadow: 1px 0 0 rgba(0,0,0,.08);
+  color: var(--gold-ink);
+  padding: 16px 10px 12px;
+  gap: 12px;
+  overflow: hidden;            /* rolagem só no miolo; marca e rodapé ficam fixos */
+}
+.brand{ padding: 2px 8px 10px; border-bottom: 1px solid rgba(31,26,14,.12); }
+.brand-name{ color: var(--gold-ink); }
+.brand-sub{ color: var(--gold-ink-2); }
+.side-scroll{ flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 2px; scrollbar-width: thin; scrollbar-color: rgba(31,26,14,.25) transparent; }
+.side-scroll::-webkit-scrollbar{ width: 6px; }
+.side-scroll::-webkit-scrollbar-thumb{ background: rgba(31,26,14,.22); border-radius: 6px; }
+.side-title{ color: var(--gold-ink-2); font-size: 10.5px; letter-spacing: .08em; }
+.side-group > summary{ list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; padding: 4px 8px; border-radius: 6px; }
+.side-group > summary::-webkit-details-marker{ display: none; }
+.side-group > summary::after{ content: "▾"; font-size: 11px; transition: transform .15s; }
+.side-group:not([open]) > summary::after{ transform: rotate(-90deg); }
+.side-group > summary:hover{ background: rgba(255,255,255,.25); }
+.side-group-body{ display: flex; flex-direction: column; gap: 1px; margin-top: 2px; }
+.side-item{ color: var(--gold-ink); font-weight: 500; border-left: 3px solid transparent; }
+.side-item:hover{ background: rgba(255,255,255,.32); color: var(--gold-ink); }
+.side-item.active{ background: #fff; color: var(--gold-ink); font-weight: 700; border-left-color: var(--gold-ink); box-shadow: 0 1px 3px rgba(0,0,0,.10); }
+.side-item .cnt{ color: var(--gold-ink-2); background: rgba(255,255,255,.35); padding: 0 7px; }
+.side-item.active .cnt{ background: var(--gold); color: var(--gold-ink); }
+.side-item.urgent-item.active{ background: #fff; color: var(--red-soft-text); border-left-color: var(--red); }
+.side-item .ic{ width: 18px; }
+.side-item .lbl{ white-space: normal; line-height: 1.25; align-items: flex-start; }
+.sidebar-foot{ margin-top: 0; padding: 10px 6px 0; border-top: 1px solid rgba(31,26,14,.14); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--gold-ink); }
+.side-user{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.side-logout{ padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(31,26,14,.2); background: rgba(255,255,255,.45); color: var(--gold-ink); font-size: 12px; font-weight: 600; cursor: pointer; }
+.side-logout:hover{ background: #fff; }
+.sidebar-close{ border-color: rgba(31,26,14,.2) !important; background: rgba(255,255,255,.5) !important; color: var(--gold-ink) !important; }
+@media (max-width:1180px) and (min-width:901px){
+  .app{ grid-template-columns: 206px 1fr; }
+  .side-item{ font-size: 12px; padding: 6px 6px 6px 8px; }
+}
+@media (max-width:900px){
+  .app{ grid-template-columns: 1fr; }
+  .sidebar{ width: 280px; height: 100dvh; }
+}
+
+/* ── CONTATOS (até 3) ─────────────────────────────────────── */
+.people-list{ display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.person-card{ display: flex; align-items: center; gap: 10px; padding: 9px 10px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.person-card .avatar{ width: 30px; height: 30px; font-size: 11px; flex-shrink: 0; }
+.person-cargo{ font-weight: 500; color: var(--text-3); font-size: 12px; }
+.person-li{ display: inline-block; color: var(--blue); text-decoration: none; }
+.person-card .extra-contact-rm{ font-size: 11px; }
+.inline-form-title{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin-bottom: 8px; }
+.inline-form-err{ font-size: 12px; color: var(--red); min-height: 0; margin-bottom: 6px; }
+.inline-form-err:empty{ display: none; }
+.kcard-people{ display: flex; flex-direction: column; gap: 6px; }
+.kcard-people .kcard-contact{ min-width: 0; }
+.kcard-people .kcard-nome{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── REGISTRAR CONTATO: com quem ─────────────────────────── */
+.cl-form{ grid-template-columns: 1fr 1fr 1.2fr; }
+.cl-who-lbl{ font-size: 11px; font-weight: 600; color: var(--text-3); margin: 2px 0 5px; }
+.cl-who-lbl span{ font-weight: 400; }
+.cl-who{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; }
+.cl-who-item{ display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; cursor: pointer; }
+.cl-who-item:has(input:checked){ border-color: var(--gold); background: rgba(255,191,0,.14); font-weight: 600; }
+.cl-who-item input{ accent-color: #B98A00; }
+.cl-who-empty{ font-size: 12px; color: var(--text-3); }
+.cl-lbl input[type=text]{ padding: 7px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12.5px; }
+.cl-row .cl-txt{ display: flex; flex-direction: column; gap: 2px; }
+.cl-note{ color: var(--text-2); font-size: 12px; }
+.cl-row.editing select, .cl-row.editing input{ min-width: 0; }
+
+/* ── NOTAS AUTOMÁTICAS ────────────────────────────────────── */
+.notes-live{ font-size: 10px; font-weight: 600; color: var(--green); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.notes-copy{ font-size: 11px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.notes-copy:hover{ background: var(--surface-2); }
+.auto-notes{ white-space: normal; display: flex; flex-direction: column; gap: 9px; }
+.auto-notes .an-head{ font-weight: 700; color: var(--text); font-size: 13.5px; }
+.auto-notes p{ margin: 0; }
+.auto-notes b{ color: var(--text); }
+@media (max-width:520px){
+  .cl-form{ grid-template-columns: 1fr 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -719,62 +807,43 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
       <button class="sidebar-close" id="sidebar-close-btn" type="button" aria-label="Fechar menu">✕</button>
     </div>
 
-    <div class="side-block">
-      <div class="side-title">Páginas</div>
-      <button class="side-item active" id="nav-pipeline" type="button">
-        <span class="lbl"><span class="ic">📊</span>Pipeline</span>
-      </button>
-      <button class="side-item" id="nav-meudia" type="button">
-        <span class="lbl"><span class="ic">☀️</span>Meu dia</span>
-      </button>
-      <button class="side-item" id="nav-empresas" type="button">
-        <span class="lbl"><span class="ic">🏢</span>Empresas</span>
-      </button>
-      <button class="side-item" id="nav-dashboard" type="button" style="display:none">
-        <span class="lbl"><span class="ic">📈</span>Dashboard</span>
-      </button>
-    </div>
+    <div class="side-scroll">
+      <div class="side-block">
+        <div class="side-title">Páginas</div>
+        <!-- Ordem alfabética -->
+        <button class="side-item urgent-item" id="nav-urgent" type="button">
+          <span class="lbl"><span class="ic">🔴</span>Ação hoje</span>
+          <span class="cnt" id="nav-urgent-cnt">0</span>
+        </button>
+        <button class="side-item" id="nav-dashboard" type="button" style="display:none">
+          <span class="lbl"><span class="ic">📈</span>Dashboard</span>
+        </button>
+        <button class="side-item" id="nav-empresas" type="button">
+          <span class="lbl"><span class="ic">🏢</span>Empresas</span>
+        </button>
+        <button class="side-item" id="nav-meudia" type="button">
+          <span class="lbl"><span class="ic">☀️</span>Meu dia</span>
+        </button>
+        <button class="side-item active" id="nav-pipeline" type="button">
+          <span class="lbl"><span class="ic">📊</span>Pipeline</span>
+        </button>
+      </div>
 
-    <div class="side-block">
-      <div class="side-title">Visão rápida</div>
-      <button class="side-item urgent-item" id="nav-urgent" type="button">
-        <span class="lbl"><span class="dot-urg"></span>Ação hoje</span>
-        <span class="cnt" id="nav-urgent-cnt">0</span>
-      </button>
-    </div>
+      <!-- Segmento e Status são montados em JS (renderSidebarFilters), em ordem alfabética -->
+      <details class="side-block side-group" id="seg-filter" open>
+        <summary class="side-title">Segmento</summary>
+        <div class="side-group-body" id="seg-filter-body"></div>
+      </details>
 
-    <div class="side-block" id="seg-filter">
-      <div class="side-title">Segmento</div>
-      <button class="side-item active" data-seg="todos" type="button"><span class="lbl">Todos</span><span class="cnt" id="cnt-seg-todos">0</span></button>
-      <button class="side-item" data-seg="Automotivo" type="button"><span class="lbl">🚗 Automotivo</span><span class="cnt" id="cnt-seg-Automotivo">0</span></button>
-      <button class="side-item" data-seg="Farmacêutico" type="button"><span class="lbl">💊 Farmacêutico</span><span class="cnt" id="cnt-seg-Farmacêutico">0</span></button>
-      <button class="side-item" data-seg="Benefícios" type="button"><span class="lbl">🎁 Benefícios</span><span class="cnt" id="cnt-seg-Benefícios">0</span></button>
-      <button class="side-item" data-seg="Varejo" type="button"><span class="lbl">🛍️ Varejo</span><span class="cnt" id="cnt-seg-Varejo">0</span></button>
-      <button class="side-item" data-seg="Alimentos & Bebidas" type="button"><span class="lbl">🍫 Alimentos</span><span class="cnt" id="cnt-seg-Alimentos & Bebidas">0</span></button>
-      <button class="side-item" data-seg="Cosméticos" type="button"><span class="lbl">💄 Cosméticos</span><span class="cnt" id="cnt-seg-Cosméticos">0</span></button>
-      <button class="side-item" data-seg="Saúde" type="button"><span class="lbl">🏥 Saúde</span><span class="cnt" id="cnt-seg-Saúde">0</span></button>
-      <button class="side-item" data-seg="Máquinas & Ferramentas" type="button"><span class="lbl">🔧 Máquinas & Ferramentas</span><span class="cnt" id="cnt-seg-Máquinas & Ferramentas">0</span></button>
-      <button class="side-item" data-seg="Pets" type="button"><span class="lbl">🐾 Pets</span><span class="cnt" id="cnt-seg-Pets">0</span></button>
-      <button class="side-item" data-seg="Mobilidade Urbana" type="button"><span class="lbl">🛴 Mobilidade Urbana</span><span class="cnt" id="cnt-seg-Mobilidade Urbana">0</span></button>
-    </div>
-
-    <div class="side-block" id="status-filter">
-      <div class="side-title">Status</div>
-      <button class="side-item active" data-status="todos" type="button"><span class="lbl">Todos</span><span class="cnt" id="cnt-st-todos">0</span></button>
-      <button class="side-item" data-status="follow-up" type="button"><span class="lbl">Follow-up vencido</span><span class="cnt" id="cnt-st-follow-up">0</span></button>
-      <button class="side-item" data-status="aguardando" type="button"><span class="lbl">Aguardando</span><span class="cnt" id="cnt-st-aguardando">0</span></button>
-      <button class="side-item" data-status="email-preparado" type="button"><span class="lbl">Enviar</span><span class="cnt" id="cnt-st-email-preparado">0</span></button>
-      <button class="side-item" data-status="apollo-pendente" type="button"><span class="lbl">Confirmar Apollo</span><span class="cnt" id="cnt-st-apollo-pendente">0</span></button>
-      <button class="side-item" data-status="reengajamento" type="button"><span class="lbl">Reengajar</span><span class="cnt" id="cnt-st-reengajamento">0</span></button>
-      <button class="side-item" data-status="no-radar" type="button"><span class="lbl">📡 No radar</span><span class="cnt" id="cnt-st-no-radar">0</span></button>
-      <button class="side-item" data-status="nao-entregue" type="button"><span class="lbl">Não entregue</span><span class="cnt" id="cnt-st-nao-entregue">0</span></button>
-      <button class="side-item" data-status="agendamento" type="button"><span class="lbl">📅 Agendamento</span><span class="cnt" id="cnt-st-agendamento">0</span></button>
-      <button class="side-item" data-status="reuniao" type="button"><span class="lbl">Reunião</span><span class="cnt" id="cnt-st-reuniao">0</span></button>
+      <details class="side-block side-group" id="status-filter" open>
+        <summary class="side-title">Status</summary>
+        <div class="side-group-body" id="status-filter-body"></div>
+      </details>
     </div>
 
     <div class="sidebar-foot">
-      <div style="margin-bottom:8px">Atualizado em 14/08/2026</div>
-      <button type="button" onclick="doLogout()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;cursor:pointer">Sair</button>
+      <div class="side-user" id="side-user"></div>
+      <button type="button" class="side-logout" onclick="doLogout()">Sair</button>
     </div>
   </aside>
 
@@ -993,11 +1062,19 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     <div class="d-contact-made-lbl">✅ Registrar contato feito</div>
     <div class="cl-form">
       <label class="cl-lbl">Data<input type="date" id="cl-date" onchange="updateContactPreview()"></label>
-      <label class="cl-lbl">Hora<input type="time" id="cl-time" onchange="updateContactPreview()"></label>
       <label class="cl-lbl">Meio<select id="cl-channel" onchange="updateContactPreview()">
         <option>LinkedIn</option><option>Email</option><option>WhatsApp</option><option>Ligação</option><option>Reunião</option><option>Outro</option>
       </select></label>
+      <label class="cl-lbl">Resultado<select id="cl-result">
+        <option value="aguardando">Aguardando resposta</option>
+        <option value="respondeu">Respondeu</option>
+        <option value="reuniao-agendada">Reunião agendada</option>
+        <option value="sem-interesse">Sem interesse</option>
+      </select></label>
     </div>
+    <div class="cl-who-lbl">Com quem? <span>(marque todos que receberam o contato — cada pessoa conta no dashboard)</span></div>
+    <div class="cl-who" id="cl-who"></div>
+    <label class="cl-lbl" style="margin-bottom:8px">O que aconteceu? (opcional — entra nas notas)<input type="text" id="cl-note" placeholder="Ex: Após o contato, foi agendada reunião para 05/10"></label>
     <div class="cl-preview" id="cl-preview"></div>
     <button class="cm-btn cl-save" onclick="addContact()">➕ Registrar contato</button>
     <div class="cl-list" id="cl-list"></div>
@@ -1039,12 +1116,12 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
 
   <div id="d-view-sections">
   <div class="d-section">
-    <div class="d-section-title">Contato principal</div>
-    <div class="d-grid" id="d-contact-grid"></div>
-    <div class="extra-contacts-list" id="extra-contacts-list"></div>
-    <button class="add-contact-btn" onclick="toggleAddContactForm()">➕ Adicionar contato</button>
+    <div class="d-section-title">Contatos <span id="d-people-cnt" style="font-weight:600;color:var(--text-3)"></span></div>
+    <div class="people-list" id="d-people"></div>
+    <button class="add-contact-btn" id="add-contact-btn" onclick="toggleAddContactForm()">➕ Adicionar contato</button>
     <div id="inline-contact-form" style="display:none">
       <div class="inline-contact-form">
+        <div class="inline-form-title" id="nc-title">Novo contato</div>
         <div class="inline-form-grid">
           <label class="inline-lbl">Nome<input class="inline-inp" id="nc-nome" placeholder="Nome Sobrenome"></label>
           <label class="inline-lbl">Cargo<input class="inline-inp" id="nc-cargo" placeholder="Cargo"></label>
@@ -1052,12 +1129,14 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
           <label class="inline-lbl">Telefone<input class="inline-inp" id="nc-tel" placeholder="11 99999-9999"></label>
           <label class="inline-lbl full">LinkedIn<input class="inline-inp" id="nc-li" placeholder="linkedin.com/in/perfil"></label>
         </div>
+        <div class="inline-form-err" id="nc-err"></div>
         <div class="inline-form-actions">
-          <button class="inline-save-btn" onclick="saveExtraContact()">💾 Salvar contato</button>
+          <button class="inline-save-btn" id="nc-save" onclick="saveExtraContact()">💾 Salvar contato</button>
           <button class="inline-cancel-btn" onclick="cancelAddContact()">Cancelar</button>
         </div>
       </div>
     </div>
+    <div class="d-grid" id="d-contact-grid" style="margin-top:12px"></div>
   </div>
 
   <div class="d-section" id="d-contacts-section" style="display:none">
@@ -1065,9 +1144,12 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     <div id="d-contacts-list"></div>
   </div>
 
-  <div class="d-section">
-    <div class="d-section-title">Timeline</div>
-    <div class="timeline" id="d-timeline"></div>
+  <div class="d-section" id="d-notes-section">
+    <div class="d-section-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>Notas <span class="notes-live">● atualiza sozinho</span></span>
+      <button type="button" class="notes-copy" id="d-notes-copy" onclick="copyNotes()">📋 Copiar</button>
+    </div>
+    <div class="notes-box auto-notes" id="d-notes">—</div>
   </div>
 
   <div class="d-section" id="d-context-section" style="display:none">
@@ -1075,9 +1157,9 @@ textarea.edit-inp{resize:vertical;line-height:1.55}
     <div class="d-grid" id="d-context-grid"></div>
   </div>
 
-  <div class="d-section" id="d-notes-section">
-    <div class="d-section-title">Notas</div>
-    <div class="notes-box" id="d-notes">—</div>
+  <div class="d-section" id="d-obs-section">
+    <div class="d-section-title">Observações</div>
+    <div class="notes-box" id="d-obs">—</div>
   </div>
 
   <div class="d-section">
@@ -1177,7 +1259,6 @@ const isOverdue=(l)=>l.pa&&l.pa!=="—"&&l.pa<today();
 // Ajuste aqui se a cadência do time mudar.
 const CADENCE=[3,4,5,7];            // 1º, 2º, 3º, 4º+ contato
 const FAST_CHANNELS=["WhatsApp","Ligação"]; // resposta costuma ser mais rápida: -1 dia útil
-const CUTOFF_HOUR=18;               // contato depois desse horário conta como o dia útil seguinte
 const CONTACT_CHANNELS=["LinkedIn","Email","WhatsApp","Ligação","Reunião","Outro"];
 const CH_ICON={LinkedIn:"💼",Email:"📧",WhatsApp:"💬","Ligação":"📞","Reunião":"🤝",Outro:"•"};
 const isoToDate=iso=>new Date(iso+"T12:00:00Z");
@@ -1188,10 +1269,8 @@ function addBizDays(iso,n){
   while(n>0){d.setUTCDate(d.getUTCDate()+1);if(isBizDay(d))n--;}
   return dateToIso(d);
 }
-function nextActionFor(dateISO,timeStr,nth,channel){
+function nextActionFor(dateISO,nth,channel){
   let start=isoToDate(dateISO);
-  const late=timeStr&&parseInt(timeStr.slice(0,2),10)>=CUTOFF_HOUR;
-  if(late)start.setUTCDate(start.getUTCDate()+1);
   while(!isBizDay(start))start.setUTCDate(start.getUTCDate()+1);
   let days=CADENCE[Math.min(nth,CADENCE.length)-1];
   if(FAST_CHANNELS.includes(channel))days=Math.max(1,days-1);
@@ -1199,11 +1278,124 @@ function nextActionFor(dateISO,timeStr,nth,channel){
   return res<today()?today():res;
 }
 const dateSP=ts=>new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date(ts));
-const nowTimeSP=()=>new Intl.DateTimeFormat("en-GB",{timeZone:"America/Sao_Paulo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
-const contactKey=c=>(c.contacted_on||dateSP(c.created_at))+" "+((c.contacted_time||"00:00").slice(0,5));
+// Registro de contato é só por dia (sem hora). Linhas antigas ainda têm contacted_time,
+// que só serve de desempate na ordenação dentro do mesmo dia.
+const contactDay=c=>c.contacted_on||dateSP(c.created_at);
+const contactKey=c=>contactDay(c)+" "+((c.contacted_time||"00:00").slice(0,5));
 function leadContacts(leadId){
   return CONTACT_LOG.filter(c=>c.lead_id===leadId).sort((a,b)=>{const ka=contactKey(a),kb=contactKey(b);return ka<kb?-1:ka>kb?1:(a.id>b.id?1:-1);});
 }
+// Nº de "toques" pra cadência = dias distintos com contato. Falar com 3 pessoas da
+// mesma empresa no mesmo dia gera 3 registros (contam no dashboard), mas é 1 toque.
+const touchCount=list=>new Set(list.map(contactDay)).size;
+
+// ── PESSOAS DO LEAD (até 3, todas tratadas como principais) ────────────────
+// #1 mora nas colunas do próprio lead (nome/cargo/email/tel/linkedin); #2 e #3 em lead_contacts.
+const MAX_PEOPLE=3;
+const hasVal=v=>!!(v&&String(v).trim()&&v!=="—");
+function leadPeople(l){
+  const out=[];
+  if(hasVal(l.nome)||hasVal(l.email))out.push({src:"lead",id:l.id,nome:hasVal(l.nome)?l.nome:"",cargo:hasVal(l.cargo)?l.cargo:"",email:hasVal(l.email)?l.email:"",tel:l.tel||"",li:l.linkedin||""});
+  (CONTACTS[l.id]||[]).forEach(c=>out.push({src:"extra",id:c.id,nome:c.nome||"",cargo:c.cargo||"",email:c.email||"",tel:c.tel||"",li:c.li||""}));
+  return out.slice(0,MAX_PEOPLE);
+}
+const firstName=n=>(n||"").trim().split(/\s+/)[0]||"";
+function joinNames(arr){
+  const a=[...new Set(arr.filter(Boolean))];
+  if(a.length<=1)return a[0]||"";
+  return a.slice(0,-1).join(", ")+" e "+a[a.length-1];
+}
+
+// ── NOTAS AUTOMÁTICAS ─────────────────────────────────────────────────────
+// Geradas na hora a partir do contact_log + status/próxima ação do lead. Não são
+// gravadas em lugar nenhum: como são derivadas, qualquer contato registrado/editado
+// (por qualquer pessoa, via Realtime) já aparece aqui sem precisar de F5.
+const RESULT_LBL={"aguardando":"Aguardando resposta","respondeu":"Respondeu","reuniao-agendada":"Reunião agendada","sem-interesse":"Sem interesse"};
+const RESULT_RANK={"respondeu":4,"reuniao-agendada":3,"sem-interesse":2,"aguardando":1};
+const endDot=s=>{s=(s||"").trim();return !s?"":/[.!?]$/.test(s)?s:s+".";};
+function buildNotes(l){
+  const people=leadPeople(l);
+  const fallback=firstName(people[0]?.nome)||"o contato";
+  // Agrupa registros do mesmo dia + meio num único evento (ex.: WhatsApp pra 2 pessoas no mesmo dia).
+  const events=[];
+  leadContacts(l.id).forEach(c=>{
+    const day=contactDay(c),ch=c.channel||"Outro";
+    let ev=events.find(e=>e.day===day&&e.ch===ch);
+    if(!ev){ev={day,ch,names:[],notes:[],result:"aguardando"};events.push(ev);}
+    ev.names.push(firstName(c.contato_nome)||fallback);
+    if(c.nota&&!ev.notes.includes(c.nota.trim()))ev.notes.push(c.nota.trim());
+    const r=c.resultado||"aguardando";
+    if((RESULT_RANK[r]||0)>(RESULT_RANK[ev.result]||0))ev.result=r;
+  });
+  let hadMeeting=false,followAfterMeeting=0,noReplyAfterMeeting=0;
+  const lines=events.map((ev,i)=>{
+    const who=joinNames(ev.names)||fallback;
+    const isMeeting=ev.ch==="Reunião";
+    let title,txt;
+    if(isMeeting){title="Reunião comercial";txt=`Reunião realizada com ${who}.`;}
+    else{
+      title=i===0?"Primeiro contato":hadMeeting&&followAfterMeeting===0?"Follow-up":"Nova tentativa de contato";
+      const msg=i===0?"a primeira mensagem":title==="Follow-up"?"uma mensagem de follow-up":"uma nova mensagem";
+      if(ev.ch==="Email")txt=i===0?`Enviado o primeiro e-mail para ${who}.`:`Enviado ${title==="Follow-up"?"um e-mail de follow-up":"um novo e-mail"} para ${who}.`;
+      else if(ev.ch==="Ligação")txt=`Ligação feita para ${who}.`;
+      else if(ev.ch==="Outro")txt=`Contato feito com ${who}.`;
+      else txt=`Enviada ${msg} para ${who} pelo ${ev.ch}.`;
+      if(hadMeeting){followAfterMeeting++;if(ev.result==="aguardando")noReplyAfterMeeting++;}
+    }
+    if(isMeeting){hadMeeting=true;followAfterMeeting=0;noReplyAfterMeeting=0;}
+    const extra=ev.notes.map(endDot).join(" ");
+    const isLast=i===events.length-1;
+    let res="";
+    if(ev.result==="respondeu")res=`${who} respondeu.`;
+    else if(ev.result==="reuniao-agendada"&&!/reuni/i.test(extra))res="Reunião agendada.";
+    else if(ev.result==="sem-interesse")res="Contato sinalizou não ter interesse no momento.";
+    else if(ev.result==="aguardando"&&!isLast&&!isMeeting)res="Não houve resposta.";
+    return{date:fmt(ev.day),title,body:[txt,extra,res].filter(Boolean).join(" ")};
+  });
+
+  // Status atual — a partir do status do lead + o que aconteceu nos contatos.
+  const last=events[events.length-1];
+  const tries=events.filter(e=>e.ch!=="Reunião").length;
+  const names=joinNames(people.map(p=>firstName(p.nome)))||fallback;
+  const num=n=>["","uma","duas","três","quatro","cinco"][n]||String(n);
+  let status;
+  if(l.status==="ganho")status="Negócio fechado. ✅";
+  else if(l.status==="perdido")status="Negociação encerrada sem avanço.";
+  else if(l.status==="proposta")status="Proposta enviada, aguardando retorno.";
+  else if(!events.length)status="Ainda sem contato registrado.";
+  else if(last.result==="respondeu")status=`${joinNames(last.names)} respondeu — conversa em andamento.`;
+  else if(last.result==="sem-interesse")status="Contato sinalizou não ter interesse no momento.";
+  else if(hadMeeting&&noReplyAfterMeeting>0)status=`Reunião realizada, porém sem retorno ${noReplyAfterMeeting===1?"à tentativa":`às ${num(noReplyAfterMeeting)} tentativas`} de follow-up. Negociação aguardando resposta do contato.`;
+  else if(hadMeeting)status="Reunião realizada. Próximo passo é dar continuidade à negociação.";
+  else if(l.status==="agendamento"||last.result==="reuniao-agendada")status=`Reunião em agendamento${hasVal(l.pa)?` (previsão ${fmt(l.pa)})`:""}.`;
+  else if(l.status==="reuniao")status=`Reunião agendada${hasVal(l.pa)?` para ${fmt(l.pa)}`:""}.`;
+  else if(tries<=1)status=`Primeiro contato feito, aguardando resposta de ${names}.`;
+  else status=`${tries} tentativas de contato sem retorno até agora. Aguardando resposta de ${names}.`;
+  const next=hasVal(l.pd)?endDot(l.pd)+(hasVal(l.pa)&&!l.pd.includes(fmt(l.pa))?` Prazo: ${fmt(l.pa)}.`:""):"Definir a próxima ação.";
+  const header=`${l.empresa}${names&&names!=="o contato"?" — "+names:""}`;
+  return{header,lines,status,next};
+}
+function notesHtml(n){
+  return`<div class="an-head">${escH(n.header)}</div>`+
+    (n.lines.length?n.lines.map(x=>`<p><b>${escH(x.date)} — ${escH(x.title)}:</b> ${escH(x.body)}</p>`).join(""):"")+
+    `<p><b>Status atual:</b> ${escH(n.status)}</p><p><b>Próximo passo:</b> ${escH(n.next)}</p>`;
+}
+function notesText(n){
+  return[`*${n.header}*`,...n.lines.map(x=>`*${x.date} — ${x.title}:* ${x.body}`),`*Status atual:* ${n.status}`,`*Próximo passo:* ${n.next}`].join("\n\n");
+}
+function copyNotes(){
+  const l=LEADS.find(x=>x.id===_currentDrawerId);if(!l)return;
+  const txt=notesText(buildNotes(l));
+  const btn=document.getElementById("d-notes-copy");
+  const done=()=>{btn.textContent="✅ Copiado";setTimeout(()=>{btn.textContent="📋 Copiar";},1800);};
+  navigator.clipboard.writeText(txt).then(done).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
+    document.execCommand("copy");document.body.removeChild(ta);done();
+  });
+}
+// Linhas "dd/mm/aaaa: Contato #n via X." eram gravadas no obs pela versão anterior —
+// hoje isso vem do contact_log nas Notas, então some da exibição das Observações.
+const cleanObs=obs=>(obs||"").replace(/\s*\d{2}\/\d{2}\/\d{4}: Contato #\d+ via [^.]+\./g,"").trim();
 // Emoji de situação — derivado (contatos + prazo + status), sem coluna própria.
 function contactEmoji(l){
   const st=l.status;
@@ -1240,23 +1432,6 @@ function companiesMap(){
   return map;
 }
 
-// parse obs text into dated timeline entries when possible
-function parseTimeline(obs){
-  if(!obs)return[];
-  const re=/(\d{1,2}\/[a-zçãé]{3,4}):\s*/gi;
-  const idx=[];let m;
-  while((m=re.exec(obs))){idx.push({pos:m.index,date:m[1],len:m[0].length});}
-  if(!idx.length)return[{date:null,text:obs}];
-  const out=[];
-  for(let i=0;i<idx.length;i++){
-    const start=idx[i].pos+idx[i].len;
-    const end=i+1<idx.length?idx[i+1].pos:obs.length;
-    const text=obs.slice(start,end).trim();
-    if(text)out.push({date:idx[i].date,text});
-  }
-  return out;
-}
-
 // ── FILTER ─────────────────────────────────────────────────────────────────
 const hasNoAction=l=>(!l.pa||l.pa==="—")&&l.status!=="ganho"&&l.status!=="perdido";
 
@@ -1290,7 +1465,7 @@ function filtered(){
     }
     if(pq.seg&&!(l.seg||"").toLowerCase().includes(pq.seg))return false;
     if(pq.text.length){
-      const hay=[l.empresa,l.nome,l.email,l.tel].map(v=>(v||"").toLowerCase()).join(" ");
+      const hay=[l.empresa,l.nome,l.email,l.tel,...(CONTACTS[l.id]||[]).flatMap(c=>[c.nome,c.email,c.tel])].map(v=>(v||"").toLowerCase()).join(" ");
       if(!pq.text.every(t=>hay.includes(t)))return false;
     }
     return true;
@@ -1320,13 +1495,9 @@ function renderNoActionAlert(){
   }
 }
 function showNoActionOnly(){
-  document.getElementById("status-filter").querySelectorAll(".side-item[data-status]").forEach(x=>x.classList.remove("active"));
-  document.getElementById("seg-filter").querySelectorAll(".side-item[data-seg]").forEach(x=>x.classList.remove("active"));
-  document.querySelector('.side-item[data-seg="todos"]').classList.add("active");
   cSeg="todos";cStatus="sem-acao";
   showView("pipeline");
   window.scrollTo({top:0,behavior:"smooth"});
-  render();
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────────────
@@ -1343,19 +1514,6 @@ function renderStats(){
     document.getElementById("ps-empresas").textContent=new Set(LEADS.map(l=>l.empresa)).size;
     document.getElementById("ps-pendentes").textContent=LEADS.filter(l=>isUrg(l)).length;
   }
-}
-
-function renderSidebarCounts(){
-  document.getElementById("cnt-seg-todos").textContent=LEADS.length;
-  Object.keys(SEG).forEach(s=>{
-    const el=document.getElementById("cnt-seg-"+s);
-    if(el)el.textContent=LEADS.filter(l=>l.seg===s).length;
-  });
-  document.getElementById("cnt-st-todos").textContent=LEADS.length;
-  Object.keys(SC).forEach(s=>{
-    const el=document.getElementById("cnt-st-"+s);
-    if(el)el.textContent=LEADS.filter(l=>l.status===s).length;
-  });
 }
 
 function renderToday(){
@@ -1446,9 +1604,7 @@ function renderKanban(){
       const sc=SC[l.status]||{lbl:l.status,cls:"",ic:""};
       const dateStr=l.pa&&l.pa!=="—"?fmt(l.pa):"";
       const dateCls=isOverdue(l)&&isUrg(l)?"kcard-date late":"kcard-date";
-      const nomeShort=(l.nome&&l.nome!=="—")?l.nome.split(" ")[0]:"?";
-      const avColor=hashColor(l.nome||l.empresa);
-      const cargoTxt=l.cargo&&l.cargo!=="—"?l.cargo:"";
+      const people=leadPeople(l);
       // Hierarquia de sinais: 1 alerta principal (status > prazo) em destaque,
       // sinais secundários (Novo/Prova Social) agrupados numa linha discreta,
       // em vez de vários badges coloridos competindo por atenção no mesmo card.
@@ -1463,10 +1619,10 @@ function renderKanban(){
           ${primaryAlert}
         </div>
         ${secondarySignals.length?`<div class="kcard-signals">${secondarySignals.join(" · ")}</div>`:""}
-        ${(l.nome&&l.nome!=="—")||cargoTxt?`<div class="kcard-contact">
-          <div class="av-sm" style="background:${avColor}">${initials(l.nome)}</div>
-          <div><div class="kcard-nome">${escH(l.nome&&l.nome!=="—"?l.nome:"—")}</div>${cargoTxt?`<div class="kcard-cargo">${escH(cargoTxt)}</div>`:""}</div>
-        </div>`:""}
+        ${people.length?`<div class="kcard-people">${people.map(p=>`<div class="kcard-contact">
+          <div class="av-sm" style="background:${hashColor(p.nome||p.email||l.empresa)}">${initials(p.nome||p.email)}</div>
+          <div style="min-width:0"><div class="kcard-nome">${escH(p.nome||p.email)}</div>${p.cargo?`<div class="kcard-cargo">${escH(p.cargo)}</div>`:""}</div>
+        </div>`).join("")}</div>`:""}
         ${l.pd?`<div class="kcard-action">${escH(l.pd)}</div>`:""}
         <div class="kcard-foot">
           ${dateStr?`<span class="${dateCls}">📅 ${dateStr}</span>`:"<span></span>"}
@@ -1490,7 +1646,7 @@ function renderKanban(){
   }).join("");
 }
 
-function render(){renderStats();renderSidebarCounts();renderKanban();renderNoActionAlert();}
+function render(){renderStats();renderSidebarFilters();renderKanban();renderNoActionAlert();}
 
 // ── DRAWER ─────────────────────────────────────────────────────────────────
 function openDrawer(id){
@@ -1501,9 +1657,10 @@ function openDrawer(id){
   document.querySelectorAll('.cm-btn').forEach(b => b.disabled = false);
   _editingContactId = null;
   document.getElementById("cl-date").value = today();
-  document.getElementById("cl-time").value = nowTimeSP();
   document.getElementById("cl-channel").value = CONTACT_CHANNELS.includes(l.canal) ? l.canal : "LinkedIn";
-  renderContactLog(l);
+  document.getElementById("cl-result").value = "aguardando";
+  document.getElementById("cl-note").value = "";
+  _clWhoTouched = false;
   document.getElementById("d-avatar").outerHTML=avatarHtml(l.nome,"lg").replace('class="avatar lg"','id="d-avatar" class="avatar lg"');
   document.getElementById("d-empresa").textContent=l.empresa;
   const seg=SEG[l.seg]||{ic:""};
@@ -1527,12 +1684,6 @@ function openDrawer(id){
   document.getElementById("d-next-txt").textContent=l.pd||"—";
   document.getElementById("d-next-date").textContent=l.pa&&l.pa!=="—"?`Data: ${fmt(l.pa)}`:"Sem data definida";
 
-  document.getElementById("d-contact-grid").innerHTML=[
-    ["Contato",l.nome||"—"],["Cargo",l.cargo||"—"],
-    ["Email",l.email||"—"],["Telefone",l.tel||"—"],
-    ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
-  ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("")+
-  `<div class="d-field"><span class="fl">LinkedIn</span><span class="fv">${safeLinkedin(l.linkedin)?`<a href="${escH(safeLinkedin(l.linkedin))}" target="_blank" rel="noopener noreferrer">Abrir perfil ↗</a>`:"—"}</span></div>`;
 
   // Contexto comercial — só mostra a seção se algum dos 3 campos tiver conteúdo,
   // pra não poluir o drawer de leads antigos que nunca preencheram isso.
@@ -1564,25 +1715,6 @@ function openDrawer(id){
     sec.style.display="none";
   }
 
-  // timeline
-  const entries=parseTimeline(l.obs);
-  const tl=document.getElementById("d-timeline");
-  if(!entries.length||(entries.length===1&&!entries[0].text)){
-    tl.innerHTML=`<div class="tl-text" style="color:var(--text-3)">Sem histórico registrado ainda.</div>`;
-  }else{
-    tl.innerHTML=entries.map(e=>`
-      <div class="tl-item">
-        <div class="tl-rail"><div class="tl-dot"></div><div class="tl-line"></div></div>
-        <div>
-          ${e.date?`<div class="tl-date">${escH(e.date)}</div>`:""}
-          <div class="tl-text">${escT(e.text)}</div>
-        </div>
-      </div>`).join("");
-  }
-
-  const notesSec=document.getElementById("d-notes-section");
-  if(l.obs){notesSec.style.display="block";document.getElementById("d-notes").textContent=l.obs;}
-  else{notesSec.style.display="none";}
 
   // Draft email box
   const draftSec=document.getElementById("d-draft-section");
@@ -1609,12 +1741,28 @@ function openDrawer(id){
   ].map(([k,v])=>`<div class="tech-field"><span>${escH(k)}</span><b>${escH(v)}</b></div>`).join("");
 
   openApolloSection(l);
-  renderExtraContacts(l.id);
-  // Fechar form de extra contato se estava aberto
-  const icf=document.getElementById("inline-contact-form");if(icf)icf.style.display="none";
+  // Fechar form de contato se estava aberto
+  cancelAddContact();
+  renderDrawerLive(l);
   document.getElementById("scrim").classList.add("open");
   document.getElementById("drawer").classList.add("open");
 }
+
+// Partes do drawer que mudam a cada ação (contatos, registro de contatos, notas) —
+// chamadas também pelo Realtime, pra quem está com o drawer aberto ver na hora.
+function renderDrawerLive(l){
+  renderExtraContacts(l.id);
+  renderContactLog(l);
+  document.getElementById("d-contact-grid").innerHTML=[
+    ["Canal",l.canal||"—"],["Primeiro contato",fmt(l.pc)],
+  ].map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
+  document.getElementById("d-notes").innerHTML=notesHtml(buildNotes(l));
+  const obs=cleanObs(l.obs);
+  const obsSec=document.getElementById("d-obs-section");
+  obsSec.style.display=obs?"block":"none";
+  document.getElementById("d-obs").textContent=obs;
+}
+function drawerIsOpen(){return document.getElementById("drawer").classList.contains("open");}
 function copyDraft(){
   if(!window._currentDraft)return;
   navigator.clipboard.writeText(window._currentDraft).then(()=>{
@@ -1669,25 +1817,39 @@ document.getElementById("sidebar-scrim").addEventListener("click",closeSidebar);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDrawer();closeSidebar();}});
 
 // ── FILTERS & SORT ─────────────────────────────────────────────────────────
-document.getElementById("seg-filter").querySelectorAll(".side-item[data-seg]").forEach(b=>{
-  b.addEventListener("click",()=>{
-    document.getElementById("seg-filter").querySelectorAll(".side-item[data-seg]").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");cSeg=b.dataset.seg;render();
-    if(window.innerWidth<=900)closeSidebar();
-  });
+// Segmento e Status são gerados a partir dos dados, em ordem alfabética ("Todos" sempre
+// primeiro). Segmentos sem nenhum lead ficam de fora pra lista não crescer à toa.
+const alpha=(a,b)=>a.localeCompare(b,"pt-BR",{sensitivity:"base"});
+const sideBtn=(attr,val,label,cnt,active)=>
+  `<button class="side-item${active?" active":""}" ${attr}="${escH(val)}" type="button"><span class="lbl">${label}</span><span class="cnt">${cnt}</span></button>`;
+function renderSidebarFilters(){
+  const segCount={};LEADS.forEach(l=>{if(l.seg)segCount[l.seg]=(segCount[l.seg]||0)+1;});
+  const segs=Object.keys(segCount);
+  if(cSeg!=="todos"&&!segs.includes(cSeg))segs.push(cSeg);
+  document.getElementById("seg-filter-body").innerHTML=
+    sideBtn("data-seg","todos","Todos",LEADS.length,cSeg==="todos")+
+    segs.sort(alpha).map(s=>sideBtn("data-seg",s,`<span class="ic">${SEG[s]?.ic||"•"}</span>${escH(s)}`,segCount[s]||0,cSeg===s)).join("");
+  const stCount={};LEADS.forEach(l=>{stCount[l.status]=(stCount[l.status]||0)+1;});
+  document.getElementById("status-filter-body").innerHTML=
+    sideBtn("data-status","todos","Todos",LEADS.length,cStatus==="todos")+
+    Object.keys(SC).sort((a,b)=>alpha(SC[a].lbl,SC[b].lbl)).map(s=>sideBtn("data-status",s,`<span class="ic">${SC[s].ic}</span>${escH(SC[s].lbl)}`,stCount[s]||0,cStatus===s)).join("");
+  const onPipe=curView==="pipeline";
+  document.getElementById("nav-urgent").classList.toggle("active",onPipe&&cStatus==="urgente");
+  document.getElementById("nav-pipeline").classList.toggle("active",onPipe&&cStatus!=="urgente");
+}
+document.getElementById("seg-filter-body").addEventListener("click",e=>{
+  const b=e.target.closest(".side-item[data-seg]");if(!b)return;
+  cSeg=b.dataset.seg;
+  if(curView!=="pipeline")showView("pipeline");else render();
+  if(window.innerWidth<=900)closeSidebar();
 });
-document.getElementById("status-filter").querySelectorAll(".side-item[data-status]").forEach(b=>{
-  b.addEventListener("click",()=>{
-    document.getElementById("status-filter").querySelectorAll(".side-item[data-status]").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");cStatus=b.dataset.status;render();
-    if(window.innerWidth<=900)closeSidebar();
-  });
+document.getElementById("status-filter-body").addEventListener("click",e=>{
+  const b=e.target.closest(".side-item[data-status]");if(!b)return;
+  cStatus=b.dataset.status;
+  if(curView!=="pipeline")showView("pipeline");else render();
+  if(window.innerWidth<=900)closeSidebar();
 });
 document.getElementById("nav-urgent").addEventListener("click",()=>{
-  document.getElementById("status-filter").querySelectorAll(".side-item[data-status]").forEach(x=>x.classList.remove("active"));
-  document.getElementById("seg-filter").querySelectorAll(".side-item[data-seg]").forEach(x=>x.classList.remove("active"));
-  document.querySelector('.side-item[data-seg="todos"]').classList.add("active");
-  document.getElementById("nav-urgent").classList.add("active");
   cSeg="todos";cStatus="urgente";
   showView("pipeline");
   if(window.innerWidth<=900)closeSidebar();
@@ -1767,10 +1929,10 @@ function showView(v){
   document.getElementById("view-empresas").style.display=v==="empresas"?"block":"none";
   document.getElementById("view-meudia").style.display=v==="meudia"?"block":"none";
   document.getElementById("view-dashboard").style.display=v==="dashboard"?"block":"none";
-  document.getElementById("nav-pipeline").classList.toggle("active",v==="pipeline");
   document.getElementById("nav-empresas").classList.toggle("active",v==="empresas");
   document.getElementById("nav-meudia").classList.toggle("active",v==="meudia");
   document.getElementById("nav-dashboard").classList.toggle("active",v==="dashboard");
+  renderSidebarFilters();
   if(v==="empresas")renderEmpresas();
   else if(v==="meudia")renderMeuDia();
   else if(v==="dashboard")renderDashboard();
@@ -1843,11 +2005,17 @@ function renderDashboard(){
   const el=document.getElementById("dash-content");
   if(!el)return;
   const hojeISO=today();
+  // Cada registro do contact_log é 1 pessoa contatada — falar com 3 pessoas da mesma
+  // empresa conta 3. "Empresas" conta cada empresa uma vez, pra comparar as duas coisas.
   const rows=TEAM.map(t=>{
-    const minhasEmpresas=LEADS.filter(l=>l.owner_user_id===t.id).length;
-    const contatosTotal=CONTACT_LOG.filter(c=>c.user_id===t.id).length;
-    const contatosHoje=CONTACT_LOG.filter(c=>c.user_id===t.id&&(c.created_at||"").slice(0,10)===hojeISO).length;
-    return{nome:t.nome,minhasEmpresas,contatosTotal,contatosHoje};
+    const mine=CONTACT_LOG.filter(c=>c.user_id===t.id);
+    const mineHoje=mine.filter(c=>contactDay(c)===hojeISO);
+    return{nome:t.nome,
+      minhasEmpresas:LEADS.filter(l=>l.owner_user_id===t.id).length,
+      contatosTotal:mine.length,
+      empresasTotal:new Set(mine.map(c=>c.lead_id)).size,
+      contatosHoje:mineHoje.length,
+      empresasHoje:new Set(mineHoje.map(c=>c.lead_id)).size};
   });
   const semUsuario=CONTACT_LOG.filter(c=>!TEAM.some(t=>t.id===c.user_id)).length;
   el.innerHTML=`
@@ -1857,22 +2025,22 @@ function renderDashboard(){
           <tr style="background:var(--surface-2);text-align:left">
             <th style="padding:11px 16px">Usuário</th>
             <th style="padding:11px 16px">Empresas sob responsabilidade</th>
-            <th style="padding:11px 16px">Contatos feitos (total)</th>
-            <th style="padding:11px 16px">Contatos feitos hoje</th>
+            <th style="padding:11px 16px">Pessoas contatadas (total)</th>
+            <th style="padding:11px 16px">Pessoas contatadas hoje</th>
           </tr>
         </thead>
         <tbody>
           ${rows.map(r=>`<tr style="border-top:1px solid var(--border)">
             <td style="padding:11px 16px;font-weight:600">${escH(r.nome)}</td>
             <td style="padding:11px 16px">${r.minhasEmpresas}</td>
-            <td style="padding:11px 16px">${r.contatosTotal}</td>
-            <td style="padding:11px 16px">${r.contatosHoje}</td>
+            <td style="padding:11px 16px">${r.contatosTotal} <span style="color:var(--text-3);font-size:11.5px">em ${r.empresasTotal} empresa${r.empresasTotal!==1?"s":""}</span></td>
+            <td style="padding:11px 16px">${r.contatosHoje} <span style="color:var(--text-3);font-size:11.5px">em ${r.empresasHoje} empresa${r.empresasHoje!==1?"s":""}</span></td>
           </tr>`).join("")}
         </tbody>
       </table>
     </div>
     <div style="font-size:11.5px;color:var(--text-3)">
-      Contagem de "contatos feitos" começou a valer a partir de hoje (23/09/2026) — ações anteriores não entram, porque não existia esse registro antes.
+      Cada pessoa marcada em "Com quem?" ao registrar um contato conta como 1 — contato com 3 pessoas da mesma empresa soma 3. Registros contam desde 23/09/2026.
       ${semUsuario?` ${semUsuario} contato(s) sem usuário reconhecido não entraram na tabela.`:""}
     </div>`;
 }
@@ -1949,8 +2117,8 @@ function safeLinkedin(u){
 
 function timerChanges(lead,list){
   if(!list.length)return{pa:today(),pd:"Primeiro contato"};
-  const last=list[list.length-1],n=list.length;
-  const pa=nextActionFor(last.contacted_on||dateSP(last.created_at),last.contacted_time,n,last.channel);
+  const last=list[list.length-1],n=touchCount(list);
+  const pa=nextActionFor(contactDay(last),n,last.channel);
   const ch={pa,pd:`Follow-up após ${n}º contato (${last.channel}) — até ${fmt(pa)}`};
   if(PRE_MEETING.includes(lead.status))ch.status=n===1?"aguardando":"follow-up";
   return ch;
@@ -1961,7 +2129,7 @@ async function saveLeadChanges(lead,changes){
   changes.updated_by=CURRENT_USER_ID;
   Object.assign(lead,changes);
   const{data,error}=await sb.from('leads').update(changes).eq('id',lead.id).select('updated_at').single();
-  if(data?.updated_at)lead.updated_at=data.updated_at;
+  if(data?.updated_at){lead.updated_at=data.updated_at;if(lead.id===_currentDrawerId)_drawerLoadedUpdatedAt=data.updated_at;}
   return error;
 }
 
@@ -1970,61 +2138,106 @@ function updateContactPreview(){
   const el=document.getElementById("cl-preview");
   if(!l||!el)return;
   const date=document.getElementById("cl-date").value;
-  const time=document.getElementById("cl-time").value;
   const ch=document.getElementById("cl-channel").value;
   if(!date){el.textContent="";return;}
   const list=leadContacts(l.id),last=list[list.length-1];
-  if(last&&date+" "+(time||"00:00")<contactKey(last)){
+  if(last&&date<contactDay(last)){
     el.textContent="↩ Anterior ao último contato registrado — não altera o prazo do próximo contato.";return;
   }
-  el.textContent=`⏳ Próximo contato sugerido: ${fmt(nextActionFor(date,time,list.length+1,ch))}`;
+  const days=new Set(list.map(contactDay));days.add(date);
+  el.textContent=`⏳ Próximo contato sugerido: ${fmt(nextActionFor(date,days.size,ch))}`;
+}
+
+// "Com quem?" — uma caixinha por pessoa do lead. Guarda as marcações enquanto o
+// drawer está aberto (o Realtime re-renderiza esta área e não pode desmarcar nada).
+let _clWhoTouched=false;
+function renderWhoPicker(l){
+  const box=document.getElementById("cl-who");
+  const people=leadPeople(l);
+  const prev=_clWhoTouched?new Set([...box.querySelectorAll("input:checked")].map(i=>i.value)):null;
+  if(!people.length){box.innerHTML=`<span class="cl-who-empty">Nenhum contato cadastrado — o registro fica sem nome. Adicione em "Contatos" abaixo.</span>`;return;}
+  box.innerHTML=people.map((p,i)=>{
+    const nm=p.nome||p.email;
+    const on=prev?prev.has(nm):i===0;
+    return`<label class="cl-who-item"><input type="checkbox" value="${escH(nm)}" ${on?"checked":""} onchange="_clWhoTouched=true">${escH(nm)}</label>`;
+  }).join("");
 }
 
 function renderContactLog(lead){
+  renderWhoPicker(lead);
   const list=leadContacts(lead.id);
   const box=document.getElementById("cl-list");
+  const people=leadPeople(lead).map(p=>p.nome||p.email);
   box.innerHTML=list.map((c,i)=>{
-    const d=c.contacted_on||dateSP(c.created_at),t=(c.contacted_time||"").slice(0,5);
+    const d=contactDay(c);
     const cid=escH(String(c.id)),who=c.user_id?teamName(c.user_id).split(" ")[0]:"";
     if(String(c.id)===String(_editingContactId)){
+      const names=[...new Set([...(c.contato_nome?[c.contato_nome]:[]),...people])];
       return`<div class="cl-row editing"><span class="cl-n">#${i+1}</span>
-        <input type="date" id="cle-date" value="${d}"><input type="time" id="cle-time" value="${t}">
+        <input type="date" id="cle-date" value="${d}">
         <select id="cle-channel">${CONTACT_CHANNELS.map(x=>`<option ${x===c.channel?"selected":""}>${x}</option>`).join("")}</select>
+        <select id="cle-who"><option value="">(sem nome)</option>${names.map(n=>`<option ${n===c.contato_nome?"selected":""}>${escH(n)}</option>`).join("")}</select>
+        <select id="cle-result">${Object.entries(RESULT_LBL).map(([k,v])=>`<option value="${k}" ${k===(c.resultado||"aguardando")?"selected":""}>${v}</option>`).join("")}</select>
+        <input type="text" id="cle-note" value="${escH(c.nota||"")}" placeholder="O que aconteceu? (opcional)" style="flex:1 1 100%">
         <button class="cl-ic" title="Salvar" onclick="saveContactEdit('${cid}')">💾</button>
         <button class="cl-ic" title="Cancelar" onclick="cancelContactEdit()">✕</button></div>`;
     }
+    const res=c.resultado&&c.resultado!=="aguardando"?` · <b>${escH(RESULT_LBL[c.resultado]||c.resultado)}</b>`:"";
     return`<div class="cl-row"><span class="cl-n">#${i+1}</span>
-      <span class="cl-txt">${fmt(d)}${t?" às "+t:""} · ${CH_ICON[c.channel]||""} ${escH(c.channel||"—")}${who?` <span style="color:var(--text-3)">· ${escH(who)}</span>`:""}</span>
-      <button class="cl-ic" title="Editar data/meio" onclick="startContactEdit('${cid}')">✏️</button>
+      <span class="cl-txt"><span>${fmt(d)} · ${CH_ICON[c.channel]||""} ${escH(c.channel||"—")}${c.contato_nome?` · 👤 ${escH(c.contato_nome)}`:""}${res}${who?` <span style="color:var(--text-3)">· por ${escH(who)}</span>`:""}</span>${c.nota?`<span class="cl-note">${escH(c.nota)}</span>`:""}</span>
+      <button class="cl-ic" title="Editar" onclick="startContactEdit('${cid}')">✏️</button>
       <button class="cl-ic" title="Excluir" onclick="deleteContact('${cid}')">🗑️</button></div>`;
   }).join("")||`<div style="font-size:12px;color:var(--text-3)">Nenhum contato registrado ainda.</div>`;
   updateContactPreview();
+}
+
+// Colunas novas do contact_log (migration 2026-10-15_01). Se ainda não existirem no
+// banco, o registro é salvo sem elas em vez de falhar — e avisa uma vez.
+const CL_EXTRA_COLS=["contato_nome","nota","resultado"];
+let _clExtraWarned=false;
+const isMissingColErr=e=>e&&/column|schema cache/i.test(e.message||"")&&CL_EXTRA_COLS.some(c=>(e.message||"").includes(c));
+function stripExtraCols(row){const r={...row};CL_EXTRA_COLS.forEach(c=>delete r[c]);return r;}
+function warnMigration(){
+  if(_clExtraWarned)return;_clExtraWarned=true;
+  alert("Contato salvo, mas sem pessoa/nota/resultado: o banco ainda não tem essas colunas.\nRode a migration supabase/migrations/2026-10-15_01_contatos_multiplos.sql no Supabase.");
 }
 
 async function addContact(){
   const lead=LEADS.find(l=>l.id===_currentDrawerId);
   if(!lead)return;
   const date=document.getElementById("cl-date").value;
-  const time=document.getElementById("cl-time").value||null;
   const channel=document.getElementById("cl-channel").value;
+  const resultado=document.getElementById("cl-result").value||"aguardando";
+  const nota=(document.getElementById("cl-note").value||"").trim()||null;
   if(!date){alert("Informe a data do contato.");return;}
   if(date>today()){alert("A data do contato não pode estar no futuro.");return;}
+  const boxes=[...document.querySelectorAll("#cl-who input[type=checkbox]")];
+  const who=boxes.filter(b=>b.checked).map(b=>b.value);
+  if(boxes.length&&!who.length){alert("Marque com quem foi o contato.");return;}
   const btn=document.querySelector('.cl-save');btn.disabled=true;
   const prev=leadContacts(lead.id),last=prev[prev.length-1];
-  const isLatest=!last||date+" "+(time||"00:00")>=contactKey(last);
+  const isLatest=!last||date>=contactDay(last);
 
-  const{data:row,error}=await sb.from('contact_log')
-    .insert({lead_id:lead.id,user_id:CURRENT_USER_ID,channel,contacted_on:date,contacted_time:time})
-    .select().single();
+  // Uma linha por pessoa contatada — é isso que faz o dashboard contar cada pessoa.
+  let rows=(who.length?who:[null]).map(nome=>({lead_id:lead.id,user_id:CURRENT_USER_ID,channel,contacted_on:date,contacted_time:null,contato_nome:nome,nota,resultado}));
+  let{data,error}=await sb.from('contact_log').insert(rows).select();
+  if(isMissingColErr(error)){
+    ({data,error}=await sb.from('contact_log').insert(rows.map(stripExtraCols)).select());
+    if(!error)warnMigration();
+  }
   btn.disabled=false;
-  if(error||!row){alert("Erro ao registrar contato: "+(error?.message||"sem resposta")+"\n\nSe a mensagem citar 'contacted_on', rode a migration 2026-09-28_01 no Supabase.");return;}
-  CONTACT_LOG.push(row);
+  if(error||!data||!data.length){alert("Erro ao registrar contato: "+(error?.message||"sem resposta"));return;}
+  CONTACT_LOG.push(...data);
 
   const list=leadContacts(lead.id);
-  const earliest=list[0].contacted_on||dateSP(list[0].created_at);
-  const changes={obs:(lead.obs?lead.obs+" ":"")+`${fmt(date)}: Contato #${list.length} via ${channel}.`};
+  const earliest=contactDay(list[0]);
+  const changes={};
   if(!lead.pc||lead.pc>earliest)changes.pc=earliest;
   if(isLatest){changes.canal=channel;Object.assign(changes,timerChanges(lead,list));}
+  // Resultado "Reunião agendada" já move o lead pra Agendar (evita um passo manual no Editar lead).
+  if(isLatest&&resultado==="reuniao-agendada"&&PRE_MEETING.includes(lead.status)){changes.status="agendamento";changes.pd="Confirmar/realizar a reunião agendada";}
+  // Registrou uma Reunião: o lead sai de Agendar/pré-reunião e vai pra coluna Reunião.
+  if(isLatest&&channel==="Reunião"&&(PRE_MEETING.includes(lead.status)||lead.status==="agendamento")){changes.status="reuniao";changes.pd=`Follow-up pós-reunião — até ${fmt(changes.pa||lead.pa)}`;}
   const err=await saveLeadChanges(lead,changes);
   if(err)alert("Contato salvo, mas falhou ao atualizar o lead: "+err.message);
   render();openDrawer(lead.id);
@@ -2043,13 +2256,20 @@ async function saveContactEdit(cid){
   const lead=LEADS.find(l=>l.id===_currentDrawerId);
   if(!lead)return;
   const date=document.getElementById("cle-date").value;
-  const time=document.getElementById("cle-time").value||null;
   const channel=document.getElementById("cle-channel").value;
   if(!date){alert("Informe a data do contato.");return;}
   if(date>today()){alert("A data do contato não pode estar no futuro.");return;}
+  const patch={contacted_on:date,channel,
+    contato_nome:document.getElementById("cle-who").value||null,
+    resultado:document.getElementById("cle-result").value||"aguardando",
+    nota:(document.getElementById("cle-note").value||"").trim()||null};
   const before=leadContacts(lead.id);
   const wasLatest=String(before[before.length-1]?.id)===String(cid);
-  const{data,error}=await sb.from('contact_log').update({contacted_on:date,contacted_time:time,channel}).eq('id',cid).select();
+  let{data,error}=await sb.from('contact_log').update(patch).eq('id',cid).select();
+  if(isMissingColErr(error)){
+    ({data,error}=await sb.from('contact_log').update(stripExtraCols(patch)).eq('id',cid).select());
+    if(!error)warnMigration();
+  }
   if(error||!data||!data.length){alert("Erro ao editar contato: "+(error?.message||"sem permissão (rode a migration 2026-09-28_01)"));return;}
   const row=CONTACT_LOG.find(c=>String(c.id)===String(cid));
   if(row)Object.assign(row,data[0]);
@@ -2077,67 +2297,153 @@ async function deleteContact(cid){
   render();openDrawer(lead.id);
 }
 
-function lsGetContacts(leadId) {
-  return CONTACTS[leadId] || [];
-}
+// ── CONTATOS DO LEAD (até 3, todos principais) ──────────────────────────────
+// _personEdit: null = form fechado; {src:"new"} = adicionando; {src:"lead"|"extra", id} = editando.
+let _personEdit=null;
 
 function renderExtraContacts(leadId) {
-  const list = document.getElementById('extra-contacts-list');
-  if (!list) return;
-  const contacts = lsGetContacts(leadId);
-  if (!contacts.length) { list.innerHTML = ''; return; }
-  list.innerHTML = contacts.map((c, i) => `
-    <div class="extra-contact-card">
+  const lead=LEADS.find(l=>l.id===leadId);
+  const list = document.getElementById('d-people');
+  if (!list||!lead) return;
+  const people = leadPeople(lead);
+  document.getElementById('d-people-cnt').textContent = `(${people.length}/${MAX_PEOPLE})`;
+  document.getElementById('add-contact-btn').style.display = people.length>=MAX_PEOPLE ? 'none' : '';
+  if (!people.length) { list.innerHTML = '<div style="font-size:12px;color:var(--text-3)">Nenhum contato cadastrado ainda.</div>'; return; }
+  list.innerHTML = people.map((p, i) => {
+    const li = safeLinkedin(p.li);
+    return `<div class="person-card">
+      ${avatarHtml(p.nome||p.email)}
       <div class="extra-contact-info">
-        <div class="extra-contact-name">${escH(c.nome || '(sem nome)')}</div>
-        <div class="extra-contact-meta">${escH([c.cargo, c.email, c.tel].filter(Boolean).join(' · '))}</div>
-        ${c.li ? `<div class="extra-contact-meta" style="color:var(--accent)">🔗 ${escH(c.li)}</div>` : ''}
+        <div class="extra-contact-name">${escH(p.nome || '(sem nome)')}${p.cargo?` <span class="person-cargo">· ${escH(p.cargo)}</span>`:''}</div>
+        <div class="extra-contact-meta">${escH([p.email, p.tel].filter(Boolean).join(' · ')) || '—'}</div>
+        ${li ? `<a class="extra-contact-meta person-li" href="${escH(li)}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>` : ''}
       </div>
-      <button class="extra-contact-rm" onclick="removeExtraContact(${leadId},${c.id})" title="Remover">✕</button>
-    </div>`).join('');
+      <button class="extra-contact-rm" onclick="editPerson('${p.src}',${p.id})" title="Editar">✏️</button>
+      <button class="extra-contact-rm" onclick="removePerson('${p.src}',${p.id})" title="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function fillPersonForm(p){
+  document.getElementById('nc-nome').value  = p?.nome  || '';
+  document.getElementById('nc-cargo').value = p?.cargo || '';
+  document.getElementById('nc-email').value = p?.email || '';
+  document.getElementById('nc-tel').value   = p?.tel   || '';
+  document.getElementById('nc-li').value    = p?.li    || '';
+  document.getElementById('nc-err').textContent = '';
+  document.getElementById('nc-nome').style.borderColor = '';
 }
 
 function toggleAddContactForm() {
   const f = document.getElementById('inline-contact-form');
   if (!f) return;
-  const open = f.style.display !== 'none';
-  f.style.display = open ? 'none' : 'block';
-  if (!open) document.getElementById('nc-nome')?.focus();
+  if (_personEdit && _personEdit.src === 'new') { cancelAddContact(); return; }
+  _personEdit = { src: 'new' };
+  fillPersonForm(null);
+  document.getElementById('nc-title').textContent = 'Novo contato';
+  f.style.display = 'block';
+  document.getElementById('nc-nome')?.focus();
+}
+
+function editPerson(src, id) {
+  const lead = LEADS.find(l => l.id === _currentDrawerId);
+  if (!lead) return;
+  const p = leadPeople(lead).find(x => x.src === src && String(x.id) === String(id));
+  if (!p) return;
+  _personEdit = { src, id };
+  fillPersonForm(p);
+  document.getElementById('nc-title').textContent = 'Editar contato';
+  const f = document.getElementById('inline-contact-form');
+  f.style.display = 'block';
+  document.getElementById('nc-nome')?.focus();
 }
 
 function cancelAddContact() {
+  _personEdit = null;
   const f = document.getElementById('inline-contact-form');
   if (f) f.style.display = 'none';
-  ['nc-nome','nc-cargo','nc-email','nc-tel','nc-li'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
+  fillPersonForm(null);
 }
 
 async function saveExtraContact() {
-  const id    = _currentDrawerId;
-  const nome  = (document.getElementById('nc-nome')?.value  || '').trim();
-  const cargo = (document.getElementById('nc-cargo')?.value || '').trim();
-  const email = (document.getElementById('nc-email')?.value || '').trim();
-  const tel   = (document.getElementById('nc-tel')?.value   || '').trim();
-  const li    = (document.getElementById('nc-li')?.value    || '').trim();
-  if (!nome && !email) {
+  const id   = _currentDrawerId;
+  const lead = LEADS.find(l => l.id === id);
+  if (!lead || !_personEdit) return;
+  const g = k => (document.getElementById(k)?.value || '').trim();
+  const p = { nome: g('nc-nome'), cargo: g('nc-cargo'), email: g('nc-email'), tel: g('nc-tel'), li: g('nc-li') };
+  const errEl = document.getElementById('nc-err');
+  if (!p.nome && !p.email) {
     const el = document.getElementById('nc-nome');
-    if (el) { el.style.borderColor = '#ef4444'; el.focus(); } return;
+    el.style.borderColor = '#ef4444'; el.focus();
+    errEl.textContent = 'Informe pelo menos o nome ou o email.'; return;
   }
-  document.getElementById('nc-nome').style.borderColor = '';
-  const { data, error } = await sb.from('lead_contacts').insert({ lead_id: id, nome, cargo, email, tel, li }).select().single();
-  if (error) { alert('Erro ao salvar contato: ' + error.message); return; }
-  if (!CONTACTS[id]) CONTACTS[id] = [];
-  CONTACTS[id].push(data);
-  cancelAddContact();
-  renderExtraContacts(id);
+  const li = p.li ? safeLinkedin(p.li) : '';
+  if (p.li && !li) { errEl.textContent = 'O link do LinkedIn precisa ser de linkedin.com.'; return; }
+  const btn = document.getElementById('nc-save'); btn.disabled = true;
+  try {
+    const people = leadPeople(lead);
+    const target = _personEdit.src === 'new'
+      // Lead sem pessoa ainda: a nova vira a #1 (colunas do próprio lead).
+      ? (people.some(x => x.src === 'lead') ? 'extra-new' : 'lead')
+      : _personEdit.src;
+    if (_personEdit.src === 'new' && people.length >= MAX_PEOPLE) { errEl.textContent = `Máximo de ${MAX_PEOPLE} contatos por empresa.`; return; }
+    if (target === 'lead') {
+      const changes = { nome: p.nome || '—', cargo: p.cargo || '—', email: p.email || '—', tel: p.tel };
+      if ((li || null) !== (lead.linkedin || null)) changes.linkedin = li || null;
+      const err = await saveLeadChanges(lead, changes);
+      if (err) { errEl.textContent = 'Erro ao salvar: ' + err.message; return; }
+    } else if (target === 'extra-new') {
+      const { data, error } = await sb.from('lead_contacts').insert({ lead_id: id, ...p, li }).select().single();
+      if (error || !data) { errEl.textContent = 'Erro ao salvar contato: ' + (error?.message || 'sem resposta do banco'); return; }
+      (CONTACTS[id] = CONTACTS[id] || []).push(data);
+    } else {
+      const cid = _personEdit.id;
+      let { data, error } = await sb.from('lead_contacts').update({ ...p, li }).eq('id', cid).select();
+      // Sem policy de UPDATE (migration ainda não rodada) o banco devolve 0 linhas
+      // sem erro — aí recria o contato (insert + delete, que já têm permissão).
+      if (!error && (!data || !data.length)) {
+        const ins = await sb.from('lead_contacts').insert({ lead_id: id, ...p, li }).select().single();
+        if (ins.error || !ins.data) { errEl.textContent = 'Erro ao salvar contato: ' + (ins.error?.message || 'sem resposta'); return; }
+        await sb.from('lead_contacts').delete().eq('id', cid);
+        data = [ins.data];
+      }
+      if (error) { errEl.textContent = 'Erro ao salvar contato: ' + error.message; return; }
+      CONTACTS[id] = (CONTACTS[id] || []).map(c => String(c.id) === String(cid) ? data[0] : c);
+    }
+    cancelAddContact();
+    render();
+    renderDrawerLive(lead);
+    document.getElementById('d-avatar').outerHTML = avatarHtml(lead.nome, 'lg').replace('class="avatar lg"', 'id="d-avatar" class="avatar lg"');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
-async function removeExtraContact(leadId, contactId) {
-  const { error } = await sb.from('lead_contacts').delete().eq('id', contactId);
-  if (error) { alert('Erro ao remover contato: ' + error.message); return; }
-  CONTACTS[leadId] = (CONTACTS[leadId] || []).filter(c => c.id !== contactId);
-  renderExtraContacts(leadId);
+async function removePerson(src, cid) {
+  const leadId = _currentDrawerId;
+  const lead = LEADS.find(l => l.id === leadId);
+  if (!lead) return;
+  const p = leadPeople(lead).find(x => x.src === src && String(x.id) === String(cid));
+  if (!p || !confirm(`Remover ${p.nome || p.email} dos contatos desta empresa?`)) return;
+  if (src === 'extra') {
+    const { error } = await sb.from('lead_contacts').delete().eq('id', cid);
+    if (error) { alert('Erro ao remover contato: ' + error.message); return; }
+    CONTACTS[leadId] = (CONTACTS[leadId] || []).filter(c => String(c.id) !== String(cid));
+  } else {
+    // Removendo a #1: o próximo contato sobe pras colunas do lead, pra empresa não ficar sem pessoa principal.
+    const next = (CONTACTS[leadId] || [])[0];
+    const changes = next
+      ? { nome: next.nome || '—', cargo: next.cargo || '—', email: next.email || '—', tel: next.tel || '', linkedin: next.li || null }
+      : { nome: '—', cargo: '—', email: '—', tel: '', linkedin: null };
+    const err = await saveLeadChanges(lead, changes);
+    if (err) { alert('Erro ao remover contato: ' + err.message); return; }
+    if (next) {
+      await sb.from('lead_contacts').delete().eq('id', next.id);
+      CONTACTS[leadId] = CONTACTS[leadId].filter(c => c.id !== next.id);
+    }
+  }
+  render();
+  openDrawer(leadId);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2222,6 +2528,8 @@ async function boot() {
   // então dá pra recuperar o username de volta a partir do e-mail da sessão, sem
   // precisar guardar isso em outro lugar.
   CURRENT_USER_ID = (session.user?.email || '').split('@')[0] || null;
+  const sideUser = document.getElementById('side-user');
+  if (sideUser && CURRENT_USER_ID) sideUser.textContent = '👤 ' + teamName(CURRENT_USER_ID);
   if (CURRENT_USER_ID === ADMIN_USER_ID) {
     const navDash = document.getElementById('nav-dashboard');
     if (navDash) navDash.style.display = 'flex';
@@ -2260,6 +2568,10 @@ function realtimeRefresh(){
       else if (curView === 'meudia') renderMeuDia();
       else if (curView === 'dashboard') renderDashboard();
       else render();
+      // Drawer aberto: atualiza contatos/registro/notas na hora — exceto se a pessoa
+      // estiver no meio de uma edição (não apaga o que ela está digitando).
+      const l = LEADS.find(x => x.id === _currentDrawerId);
+      if (l && drawerIsOpen() && _editingId === null && _editingContactId === null && !_personEdit) renderDrawerLive(l);
     } catch (e) { /* falha silenciosa — a próxima ação do usuário já vai buscar dado fresco */ }
   }, 800);
 }
@@ -2271,6 +2583,7 @@ function subscribeRealtime(){
   sb.channel('leads-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, realtimeRefresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_log' }, realtimeRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'lead_contacts' }, realtimeRefresh)
     .subscribe();
 }
 
