@@ -520,7 +520,7 @@ a{color:var(--blue)}
       </details>
 
       <details class="side-group" id="status-filter" open>
-        <summary class="side-title">Status</summary>
+        <summary class="side-title">Etapa</summary>
         <div class="side-list" id="status-filter-body"></div>
       </details>
     </div>
@@ -620,13 +620,11 @@ a{color:var(--blue)}
         <label class="field">Cargo<input id="nl-cargo" placeholder="Ex: Diretor Comercial"></label>
         <label class="field full">Email<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
         <label class="field full">LinkedIn (link do perfil)<input id="nl-linkedin" type="url" placeholder="https://www.linkedin.com/in/perfil"></label>
-        <label class="field">Próxima ação<select id="nl-status">
-          <option value="apollo-pendente">Confirmar Apollo</option>
-          <option value="no-radar">No Radar</option>
-          <option value="email-preparado">Enviar Email</option>
-          <option value="reengajamento">Reengajar</option>
+        <label class="field">Etapa<select id="nl-status">
+          <option value="no-radar">Radar</option>
+          <option value="apollo-pendente" selected>Qualificar</option>
+          <option value="email-preparado">Engajar</option>
           <option value="aguardando">Aguardando</option>
-          <option value="follow-up">Follow-up</option>
         </select></label>
         <label class="field">Data<input id="nl-pa" type="date"></label>
         <label class="field full">Responsável<select id="nl-owner"><option value="">Sem responsável</option></select></label>
@@ -830,31 +828,55 @@ const ICONS={"kanban":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"
 
 let LEADS = [];
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-// Cor de cada status (ponto colorido + texto, em vez de etiqueta cheia).
-const SC = {
-  "follow-up":      {lbl:"Follow-up Vencido", c:"#EF4444", urg:true },
-  "aguardando":     {lbl:"Aguardando",        c:"#F59E0B", urg:false},
-  "nao-entregue":   {lbl:"Não Entregue",      c:"#B91C1C", urg:true },
-  "apollo-pendente":{lbl:"Confirmar Apollo",  c:"#8B5CF6", urg:true },
-  "email-preparado":{lbl:"Enviar Email",      c:"#2563EB", urg:true },
-  "reengajamento":  {lbl:"Reengajar",         c:"#0EA5E9", urg:true },
-  "agendamento":    {lbl:"Agendando Reunião", c:"#14B8A6", urg:true },
-  "reuniao":        {lbl:"Reunião",           c:"#16A34A", urg:false},
-  "proposta":       {lbl:"Proposta Enviada",  c:"#DAA520", urg:false},
-  "ganho":          {lbl:"Ganho",             c:"#15803D", urg:false},
-  "perdido":        {lbl:"Perdido",           c:"#6B7280", urg:false},
-  "no-radar":       {lbl:"No Radar",          c:"#6366F1", urg:false},
-};
+// ETAPAS — um único nome por etapa, usado igual nas colunas do pipeline, no seletor
+// "Etapa" do lead, nos filtros e nos relatórios. Fechado e Perdido têm coluna própria.
+// O banco continua com os valores de status de sempre (as automações escrevem neles);
+// "statuses" diz quais valores caem em cada etapa e "drop" é o valor gravado ao mover.
+const STAGES = [
+  {id:"radar",      lbl:"Radar",           ic:"radar",     c:"#6366F1", statuses:["no-radar"],                              drop:"no-radar"},
+  {id:"qualificar", lbl:"Qualificar",      ic:"search",    c:"#8B5CF6", statuses:["apollo-pendente"],                       drop:"apollo-pendente"},
+  {id:"engajar",    lbl:"Engajar",         ic:"send",      c:"#2563EB", statuses:["email-preparado","reengajamento"],       drop:"email-preparado"},
+  {id:"aguardando", lbl:"Aguardando",      ic:"hourglass", c:"#F59E0B", statuses:["aguardando","follow-up","nao-entregue"], drop:"aguardando"},
+  {id:"agendar",    lbl:"Agendar reunião", ic:"calendar",  c:"#14B8A6", statuses:["agendamento"],                           drop:"agendamento"},
+  {id:"reuniao",    lbl:"Reunião",         ic:"handshake", c:"#16A34A", statuses:["reuniao"],                               drop:"reuniao"},
+  {id:"proposta",   lbl:"Proposta",        ic:"file",      c:"#DAA520", statuses:["proposta"],                              drop:"proposta"},
+  {id:"fechado",    lbl:"Fechado",         ic:"trophy",    c:"#15803D", statuses:["ganho"],                                 drop:"ganho"},
+  {id:"perdido",    lbl:"Perdido",         ic:"xCircle",   c:"#6B7280", statuses:["perdido"],                               drop:"perdido"},
+];
+// Sub-situação dentro da etapa (aparece como etiqueta no card, não como etapa separada).
+const STATUS_TAG={"follow-up":"Follow-up","nao-entregue":"Não entregue","reengajamento":"Reengajar"};
+const URGENT_STATUSES=["follow-up","nao-entregue","apollo-pendente","email-preparado","reengajamento","agendamento"];
+const SC={};
+STAGES.forEach(st=>st.statuses.forEach(s=>{SC[s]={lbl:st.lbl,tag:STATUS_TAG[s]||"",c:st.c,urg:URGENT_STATUSES.includes(s),stage:st.id};}));
+const stageOf=status=>STAGES.find(st=>st.statuses.includes(status))||STAGES[0];
+const stageById=id=>STAGES.find(st=>st.id===id);
+// Aceita id de etapa ou valor de status antigo (visões salvas antes da unificação).
+const stageKey=v=>stageById(v)?v:(SC[v]?.stage||v);
+const stLabel=s=>SC[s]?SC[s].lbl+(SC[s].tag?` · ${SC[s].tag}`:""):s;
+
+// SEGMENTOS — lista enxuta (estudo de 16/10/2026: 29 nomes → 15). Nomes antigos que ainda
+// estiverem no banco (ou que alguma automação escreva) são mostrados pelo nome novo.
 const SEG = {
-  "Automotivo":"#2f5eff","Farmacêutico":"#7c3aed","Benefícios":"#16a34a","Varejo":"#b45309","Saúde":"#0891b2",
-  "Alimentos & Bebidas":"#ea580c","Cosméticos":"#db2777","Construção & Imobiliário":"#57534e","Seguros":"#0f766e",
-  "Bebidas":"#ea580c","Bebidas / Alimentos":"#ea580c","Aviação / Turismo":"#0369a1","Turismo / Viagens":"#0369a1",
-  "Saúde / Diagnóstica":"#0891b2","Planos de Saúde":"#0891b2","Educação":"#4f46e5","Moda / Calçados":"#b45309",
-  "Varejo / Joalheria":"#b45309","Moda / Varejo":"#b45309","Energia / Combustíveis":"#ca8a04","Locação de Veículos":"#2f5eff",
-  "Tecnologia / ERP":"#6366f1","Construção Civil / Imóveis":"#57534e","Máquinas & Ferramentas":"#475569","Pets":"#f59e0b",
-  "Mobilidade Urbana":"#059669",
+  "Alimentos & Bebidas":"#ea580c","Automotivo":"#2f5eff","Construção & Imobiliário":"#57534e","Cosméticos & Beleza":"#db2777",
+  "Educação":"#4f46e5","Energia":"#ca8a04","Farmacêutico":"#7c3aed","Máquinas & Ferramentas":"#475569",
+  "Mobilidade Urbana":"#059669","Pets":"#f59e0b","Saúde":"#0891b2","Seguros & Benefícios":"#0f766e",
+  "Serviços & Tecnologia":"#6366f1","Turismo & Aviação":"#0369a1","Varejo":"#b45309",
 };
-const segColor=s=>SEG[s]||"#94a3b8";
+const SEG_ALIAS = {
+  "Bebidas":"Alimentos & Bebidas","Bebidas / Alimentos":"Alimentos & Bebidas",
+  "Concessionárias de Veículos":"Automotivo","Locação de Veículos":"Automotivo",
+  "Construção Civil / Imóveis":"Construção & Imobiliário",
+  "Cosméticos":"Cosméticos & Beleza",
+  "Energia / Combustíveis":"Energia",
+  "Indústria - Farmacêutica":"Farmacêutico",
+  "Saúde / Diagnóstica":"Saúde","Planos de Saúde":"Saúde",
+  "Seguros":"Seguros & Benefícios","Benefícios":"Seguros & Benefícios",
+  "Serviços":"Serviços & Tecnologia","Tecnologia / ERP":"Serviços & Tecnologia",
+  "Aviação / Turismo":"Turismo & Aviação","Turismo / Viagens":"Turismo & Aviação",
+  "Moda / Varejo":"Varejo","Moda / Calçados":"Varejo","Varejo / Joalheria":"Varejo",
+};
+const segOf=l=>{const s=(l&&l.seg)||"";return SEG_ALIAS[s]||s;};
+const segColor=s=>SEG[SEG_ALIAS[s]||s]||"#94a3b8";
 const AV_COLORS = ["#2f5eff","#7c3aed","#16a34a","#b45309","#0d9488","#dc2626","#4338ca","#c2410c"];
 
 // Lista fixa da equipe — bate com os usuários já cadastrados no Supabase Auth
@@ -895,7 +917,7 @@ function hydrateIcons(root=document){
 }
 function escH(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escT(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-const stHtml=s=>{const c=SC[s]||{lbl:s,c:"#94a3b8"};return`<span class="st" style="--st:${c.c}">${escH(c.lbl)}</span>`;};
+const stHtml=s=>`<span class="st" style="--st:${SC[s]?.c||"#94a3b8"}">${escH(stLabel(s))}</span>`;
 const brl=v=>v==null||v===""||isNaN(+v)?"":new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0}).format(+v);
 const brlShort=v=>{if(v==null||v===""||isNaN(+v))return"";v=+v;if(v>=1e6)return"R$ "+(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mi";if(v>=1e3)return"R$ "+Math.round(v/1e3)+" mil";return brl(v);};
 const parseMoney=s=>{s=String(s||"").replace(/[^\d,.-]/g,"");if(!s)return null;if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");const n=parseFloat(s);return isNaN(n)?null:n;};
@@ -1067,35 +1089,71 @@ function contactEvents(l){
   });
   return events;
 }
+// Uma entrada nas notas por pessoa contatada: contato com Ana e com Bruno no mesmo dia
+// vira duas entradas, cada uma com o nome no título. Só a reunião (um único encontro com
+// várias pessoas) continua sendo uma entrada só. "Primeiro contato" / "Follow-up" /
+// "Nova tentativa" e o "Não houve resposta" são calculados por pessoa.
+function noteEntries(l,fallback){
+  const rows=leadContacts(l.id);
+  const out=[];
+  const seen=new Set();            // pessoas já contatadas antes
+  const sinceMeeting=new Set();    // pessoas contatadas depois da última reunião
+  let hadMeeting=false;
+  const meetings={};               // dia -> entrada da reunião (agrupa participantes)
+  // Registros antigos não têm nome: contam como a pessoa principal (mesma chave que ela).
+  const mainName=leadPeople(l)[0]?.nome||fallback;
+  const keyOf=c=>(c.contato_nome||mainName).toLowerCase();
+  rows.forEach((c,idx)=>{
+    const day=contactDay(c),ch=c.channel||"Outro";
+    const who=firstName(c.contato_nome)||fallback;
+    const key=keyOf(c);
+    const res=c.resultado||"aguardando";
+    const nota=endDot(c.nota);
+    if(ch==="Reunião"){
+      let m=meetings[day];
+      if(!m){m=meetings[day]={date:fmt(day),title:"Reunião comercial",names:[],notes:[],res:[]};out.push(m);}
+      m.names.push(who);if(nota&&!m.notes.includes(nota))m.notes.push(nota);
+      if(res!=="aguardando")m.res.push(res);
+      hadMeeting=true;sinceMeeting.clear();seen.add(key);
+      return;
+    }
+    const first=!seen.has(key);
+    const followUp=!first&&hadMeeting&&!sinceMeeting.has(key);
+    const title=first?`Primeiro contato com ${who}`:followUp?`Follow-up com ${who}`:`Nova tentativa com ${who}`;
+    let txt;
+    if(ch==="Email")txt=first?`Enviado o primeiro e-mail para ${who}.`:followUp?`Enviado um e-mail de follow-up para ${who}.`:`Enviado um novo e-mail para ${who}.`;
+    else if(ch==="Ligação")txt=`Ligação feita para ${who}.`;
+    else if(ch==="Outro")txt=`Contato feito com ${who}.`;
+    else txt=`Enviada ${first?"a primeira mensagem":followUp?"uma mensagem de follow-up":"uma nova mensagem"} para ${who} pelo ${ch}.`;
+    // "Não houve resposta" só quando existe um contato posterior com a MESMA pessoa.
+    const laterSame=rows.slice(idx+1).some(x=>keyOf(x)===key);
+    let r="";
+    if(res==="respondeu")r=`${who} respondeu.`;
+    else if(res==="reuniao-agendada"&&!/reuni/i.test(nota))r="Reunião agendada.";
+    else if(res==="sem-interesse")r=`${who} sinalizou não ter interesse no momento.`;
+    else if(laterSame)r="Não houve resposta.";
+    out.push({date:fmt(day),title,body:[txt,nota,r].filter(Boolean).join(" ")});
+    seen.add(key);sinceMeeting.add(key);
+  });
+  return out.map(e=>e.names?{date:e.date,title:e.title,body:[`Reunião realizada com ${joinNames(e.names)}.`,...e.notes,
+    e.res.includes("sem-interesse")?"Contato sinalizou não ter interesse.":""].filter(Boolean).join(" ")}:e);
+}
 function buildNotes(l){
   const people=leadPeople(l);
   const fallback=firstName(people[0]?.nome)||"o contato";
   const events=contactEvents(l);
-  let hadMeeting=false,followAfterMeeting=0,noReplyAfterMeeting=0;
-  const lines=events.map((ev,i)=>{
-    const who=joinNames(ev.names)||fallback;
-    const isMeeting=ev.ch==="Reunião";
-    let title,txt;
-    if(isMeeting){title="Reunião comercial";txt=`Reunião realizada com ${who}.`;}
-    else{
-      title=i===0?"Primeiro contato":hadMeeting&&followAfterMeeting===0?"Follow-up":"Nova tentativa de contato";
-      const msg=i===0?"a primeira mensagem":title==="Follow-up"?"uma mensagem de follow-up":"uma nova mensagem";
-      if(ev.ch==="Email")txt=i===0?`Enviado o primeiro e-mail para ${who}.`:`Enviado ${title==="Follow-up"?"um e-mail de follow-up":"um novo e-mail"} para ${who}.`;
-      else if(ev.ch==="Ligação")txt=`Ligação feita para ${who}.`;
-      else if(ev.ch==="Outro")txt=`Contato feito com ${who}.`;
-      else txt=`Enviada ${msg} para ${who} pelo ${ev.ch}.`;
-      if(hadMeeting){followAfterMeeting++;if(ev.result==="aguardando")noReplyAfterMeeting++;}
-    }
-    if(isMeeting){hadMeeting=true;followAfterMeeting=0;noReplyAfterMeeting=0;}
-    const extra=ev.notes.map(endDot).join(" ");
-    const isLast=i===events.length-1;
-    let res="";
-    if(ev.result==="respondeu")res=`${who} respondeu.`;
-    else if(ev.result==="reuniao-agendada"&&!/reuni/i.test(extra))res="Reunião agendada.";
-    else if(ev.result==="sem-interesse")res="Contato sinalizou não ter interesse no momento.";
-    else if(ev.result==="aguardando"&&!isLast&&!isMeeting)res="Não houve resposta.";
-    return{date:fmt(ev.day),title,body:[txt,extra,res].filter(Boolean).join(" ")};
+  // Situação da empresa como um todo (usada no "Status atual"): conta por evento agrupado.
+  let hadMeeting=false,noReplyAfterMeeting=0;
+  events.forEach(ev=>{
+    if(ev.ch==="Reunião"){hadMeeting=true;noReplyAfterMeeting=0;}
+    else if(hadMeeting&&ev.result==="aguardando")noReplyAfterMeeting++;
   });
+  const lines=noteEntries(l,fallback);
+  // Quem respondeu desde a última reunião (ou desde sempre, se não houve reunião) —
+  // com várias pessoas, a resposta de uma vale mais que a falta de resposta de outra.
+  const allRows=leadContacts(l.id);
+  const lastMeet=allRows.map(c=>c.channel).lastIndexOf("Reunião");
+  const responders=[...new Set(allRows.slice(lastMeet+1).filter(c=>c.resultado==="respondeu").map(c=>firstName(c.contato_nome)||fallback))];
   const last=events[events.length-1];
   const tries=events.filter(e=>e.ch!=="Reunião").length;
   const names=joinNames(people.map(p=>firstName(p.nome)))||fallback;
@@ -1107,6 +1165,7 @@ function buildNotes(l){
   else if(!events.length)status="Ainda sem contato registrado.";
   else if(last.result==="respondeu")status=`${joinNames(last.names)} respondeu — conversa em andamento.`;
   else if(last.result==="sem-interesse")status="Contato sinalizou não ter interesse no momento.";
+  else if(responders.length)status=`${joinNames(responders)} respondeu — conversa em andamento.`;
   else if(hadMeeting&&noReplyAfterMeeting>0)status=`Reunião realizada, porém sem retorno ${noReplyAfterMeeting===1?"à tentativa":`às ${num(noReplyAfterMeeting)} tentativas`} de follow-up. Negociação aguardando resposta do contato.`;
   else if(hadMeeting)status="Reunião realizada. Próximo passo é dar continuidade à negociação.";
   else if(l.status==="agendamento"||last.result==="reuniao-agendada")status=`Reunião em agendamento${hasVal(l.pa)?` (previsão ${fmt(l.pa)})`:""}.`;
@@ -1162,7 +1221,7 @@ function leadInsight(l){
   if(isOverdue(l)&&isUrg(l)){s-=4;why.push("follow-up atrasado");}
   if(hasVal(l.valor)&&+l.valor>0){s+=3;}
   s=Math.max(0,Math.min(100,Math.round(s)));
-  if(l.status==="ganho"||l.status==="perdido")return{score:s,hot:false,action:l.status==="ganho"?"Negócio ganho — acompanhar a implantação.":"Lead perdido — reavaliar em alguns meses.",why:"",etapa:"outro"};
+  if(l.status==="ganho"||l.status==="perdido")return{score:s,hot:false,action:l.status==="ganho"?"Negócio fechado — acompanhar a implantação.":"Lead perdido — reavaliar em alguns meses.",why:"",etapa:"outro"};
 
   const nome=firstName(people[0]?.nome);
   const usedCh=new Set(events.map(e=>e.ch));
@@ -1191,7 +1250,7 @@ function daysDiff(dateStr){
 // Situação do lead (ícone discreto no card + tooltip).
 function contactState(l){
   const st=l.status;
-  if(st==="ganho")return{i:"trophy",t:"Ganho"};
+  if(st==="ganho")return{i:"trophy",t:"Fechado"};
   if(st==="perdido")return{i:"xCircle",t:"Perdido"};
   if(st==="reuniao")return{i:"handshake",t:"Reunião"};
   if(st==="agendamento")return{i:"calendar",t:"Reunião em agendamento"};
@@ -1224,16 +1283,16 @@ const ownerMatch=l=>cOwner==="todos"||(cOwner==="me"?l.owner_user_id===CURRENT_U
 function filtered(){
   const pq=parseQuery(q);
   return LEADS.filter(l=>{
-    if(cSeg!=="todos"&&l.seg!==cSeg)return false;
+    if(cSeg!=="todos"&&segOf(l)!==cSeg)return false;
     if(!ownerMatch(l))return false;
     if(cStatus==="urgente"&&!(isHoje(l)&&isUrg(l)))return false;
     else if(cStatus==="sem-acao"&&!hasNoAction(l))return false;
-    else if(!["todos","urgente","sem-acao"].includes(cStatus)&&l.status!==cStatus)return false;
+    else if(!["todos","urgente","sem-acao"].includes(cStatus)&&SC[l.status]?.stage!==stageKey(cStatus))return false;
     if(pq.status){
-      const lbl=(SC[l.status]?.lbl||"").toLowerCase();
+      const lbl=stLabel(l.status).toLowerCase();
       if(l.status.toLowerCase()!==pq.status&&!lbl.includes(pq.status))return false;
     }
-    if(pq.seg&&!(l.seg||"").toLowerCase().includes(pq.seg))return false;
+    if(pq.seg&&!segOf(l).toLowerCase().includes(pq.seg))return false;
     if(pq.text.length){
       const hay=[l.empresa,l.nome,l.email,l.tel,...(CONTACTS[l.id]||[]).flatMap(c=>[c.nome,c.email,c.tel])].map(v=>(v||"").toLowerCase()).join(" ");
       if(!pq.text.every(t=>hay.includes(t)))return false;
@@ -1253,9 +1312,10 @@ function renderStats(){
   document.getElementById("kpis").innerHTML=
     k("todos",active.length,"leads ativos")+
     k("urgente",urg,"urgentes hoje",urg?"warn":"")+
-    k("aguardando",LEADS.filter(l=>l.status==="aguardando").length,"aguardando")+
-    k("agendamento",LEADS.filter(l=>l.status==="agendamento").length,"agendando")+
-    k("reuniao",LEADS.filter(l=>l.status==="reuniao").length,"reuniões")+
+    k("aguardando",LEADS.filter(l=>SC[l.status]?.stage==="aguardando").length,"aguardando")+
+    k("agendar",LEADS.filter(l=>SC[l.status]?.stage==="agendar").length,"agendar reunião")+
+    k("reuniao",LEADS.filter(l=>SC[l.status]?.stage==="reuniao").length,"em reunião")+
+    k("proposta",LEADS.filter(l=>SC[l.status]?.stage==="proposta").length,"proposta")+
     (valor?`<div class="kpi static" title="Soma do valor estimado dos leads ativos"><b>${brlShort(valor)}</b><span>em negociação</span></div>`:"");
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("nav-urgent-cnt",urg);
@@ -1279,7 +1339,7 @@ function renderFilterBar(){
   sel.value=cOwner;
   const chips=[];
   if(cSeg!=="todos")chips.push(["seg",`Segmento: ${cSeg}`]);
-  if(cStatus!=="todos")chips.push(["status",cStatus==="urgente"?"Urgentes hoje":cStatus==="sem-acao"?"Sem próxima ação":`Status: ${SC[cStatus]?.lbl||cStatus}`]);
+  if(cStatus!=="todos")chips.push(["status",cStatus==="urgente"?"Urgentes hoje":cStatus==="sem-acao"?"Sem próxima ação":`Etapa: ${stageById(stageKey(cStatus))?.lbl||cStatus}`]);
   if(q)chips.push(["q",`Busca: ${q}`]);
   document.getElementById("active-filters").innerHTML=chips.map(([k,t])=>`<span class="chip gold">${escH(t)}<button type="button" onclick="dropFilter('${k}')" aria-label="Remover filtro">${ic("x","sm")}</button></span>`).join("")+
     (chips.length>1?`<button class="btn ghost sm" type="button" onclick="clearFilters()">Limpar</button>`:"");
@@ -1290,21 +1350,14 @@ document.getElementById("owner-filter").addEventListener("change",e=>{cOwner=e.t
 // ── KANBAN ────────────────────────────────────────────────────────────────
 // Sequência do funil. "Follow-up vencido" e "Não entregue" ficam dentro de "Aguardar"
 // como alerta — os valores de status no banco não mudam.
-const KCOLS = [
-  {id:"radar",      title:"Radar",      ic:"radar",     statuses:["no-radar"],                             drop:"no-radar"},
-  {id:"qualificar", title:"Qualificar", ic:"search",    statuses:["apollo-pendente"],                      drop:"apollo-pendente"},
-  {id:"engajar",    title:"Engajar",    ic:"send",      statuses:["email-preparado","reengajamento"],      drop:"email-preparado"},
-  {id:"aguardar",   title:"Aguardar",   ic:"hourglass", statuses:["aguardando","follow-up","nao-entregue"],drop:"aguardando"},
-  {id:"agendar",    title:"Agendar",    ic:"calendar",  statuses:["agendamento"],                          drop:"agendamento"},
-  {id:"reuniao",    title:"Reunião",    ic:"handshake", statuses:["reuniao"],                              drop:"reuniao"},
-  {id:"resultado",  title:"Resultado",  ic:"trophy",    statuses:["proposta","ganho","perdido"],           drop:null},
-];
+// As colunas são exatamente as etapas (mesmos nomes do seletor "Etapa" do lead).
+const KCOLS = STAGES.map(st=>({...st,title:st.lbl}));
 const colOf=status=>KCOLS.find(c=>c.statuses.includes(status));
 function cardHtml(l){
   const people=leadPeople(l);
   const st=contactState(l);
   const ins=leadInsight(l);
-  const alertSt=(l.status==="follow-up"||l.status==="nao-entregue")?`<span class="st" style="--st:${SC[l.status].c}">${SC[l.status].lbl}</span>`:"";
+  const alertSt=SC[l.status]?.tag?`<span class="chip ${l.status==="reengajamento"?"":"late"}">${escH(SC[l.status].tag)}</span>`:"";
   const cls=["kcard",isOverdue(l)&&isUrg(l)?"late":hasProvaSocial(l)?"provasocial":hasNewDecisor(l)?"newdecisor":""].join(" ");
   const names=people.length?`<b>${escH(people[0].nome||people[0].email)}</b>${people.length>1?` +${people.length-1}`:""}`:`<span class="muted">Sem pessoa definida</span>`;
   const owner=l.owner_user_id?`<span class="kcard-owner" title="Responsável: ${escH(teamName(l.owner_user_id))}">${escH(initials(teamName(l.owner_user_id)))}</span>`:"";
@@ -1360,14 +1413,7 @@ async function dropOn(e,colId){
   const lead=LEADS.find(l=>l.id===id);if(!lead)return;
   const col=KCOLS.find(c=>c.id===colId);
   if(col.statuses.includes(lead.status))return;
-  let status=col.drop;
-  if(!status){
-    status=await openModal({title:`Mover "${lead.empresa}" para Resultado`,icon:"trophy",size:"sm",
-      html:`<div class="modal-msg">Qual foi o resultado?</div>`,
-      buttons:[{label:"Proposta enviada",value:"proposta"},{label:"Perdido",cls:"danger",value:"perdido"},{label:"Ganho",cls:"primary",value:"ganho"}]});
-    if(!status)return;
-  }
-  changeStatus(lead,status);
+  changeStatus(lead,col.drop);
 }
 
 // Troca de etapa centralizada (arrastar, seletor do drawer, Editar). Perdido pede o motivo.
@@ -1410,16 +1456,16 @@ const alpha=(a,b)=>a.localeCompare(b,"pt-BR",{sensitivity:"base"});
 const sideBtn=(attr,val,inner,cnt,active)=>
   `<button class="side-item${active?" active":""}" ${attr}="${escH(val)}" type="button">${inner}<span class="cnt">${cnt}</span></button>`;
 function renderSidebarFilters(){
-  const segCount={};LEADS.forEach(l=>{if(l.seg)segCount[l.seg]=(segCount[l.seg]||0)+1;});
+  const segCount={};LEADS.forEach(l=>{const sg=segOf(l);if(sg)segCount[sg]=(segCount[sg]||0)+1;});
   const segs=Object.keys(segCount);
   if(cSeg!=="todos"&&!segs.includes(cSeg))segs.push(cSeg);
   document.getElementById("seg-filter-body").innerHTML=
     sideBtn("data-seg","todos",`<span class="lbl">Todos</span>`,LEADS.length,cSeg==="todos")+
     segs.sort(alpha).map(s=>sideBtn("data-seg",s,`<span class="sw" style="background:${segColor(s)}"></span><span class="lbl">${escH(s)}</span>`,segCount[s]||0,cSeg===s)).join("");
-  const stCount={};LEADS.forEach(l=>{stCount[l.status]=(stCount[l.status]||0)+1;});
+  const stCount={};LEADS.forEach(l=>{const k=SC[l.status]?.stage;stCount[k]=(stCount[k]||0)+1;});
   document.getElementById("status-filter-body").innerHTML=
     sideBtn("data-status","todos",`<span class="lbl">Todos</span>`,LEADS.length,cStatus==="todos")+
-    Object.keys(SC).sort((a,b)=>alpha(SC[a].lbl,SC[b].lbl)).map(s=>sideBtn("data-status",s,`<span class="sw" style="background:${SC[s].c}"></span><span class="lbl">${escH(SC[s].lbl)}</span>`,stCount[s]||0,cStatus===s)).join("");
+    [...STAGES].sort((a,b)=>alpha(a.lbl,b.lbl)).map(st=>sideBtn("data-status",st.id,`<span class="sw" style="background:${st.c}"></span><span class="lbl">${escH(st.lbl)}</span>`,stCount[st.id]||0,stageKey(cStatus)===st.id)).join("");
   const onPipe=curView==="pipeline";
   document.getElementById("nav-urgent").classList.toggle("active",onPipe&&cStatus==="urgente");
   document.querySelectorAll(".side-item[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===curView&&!(curView==="pipeline"&&cStatus==="urgente")));
@@ -1499,7 +1545,7 @@ function openDrawer(id,tab="resumo"){
   document.getElementById("d-avatar").outerHTML=avatarHtml(leadPeople(l)[0]?.nome||l.empresa,"lg").replace('class="avatar lg"','id="d-avatar" class="avatar lg"');
   document.getElementById("d-empresa").textContent=l.empresa;
   document.getElementById("d-meta").innerHTML=
-    `${stHtml(l.status)}<span><span class="sw" style="background:${segColor(l.seg)}"></span> ${escH(l.seg||"—")}</span>`+
+    `${stHtml(l.status)}<span><span class="sw" style="background:${segColor(segOf(l))}"></span> ${escH(segOf(l)||"—")}</span>`+
     (hasVal(l.valor)&&+l.valor?`<span class="chip gold">${brl(l.valor)}</span>`:"")+
     (l.val?`<span class="chip ok">${ic("check","sm")}LinkedIn validado</span>`:"")+
     (l.updated_by?`<span>Atualizado por ${escH(teamName(l.updated_by))}</span>`:"");
@@ -1511,7 +1557,7 @@ function openDrawer(id,tab="resumo"){
   callout.className="callout"+(isUrg(l)&&isHoje(l)?" urgent":"");
   document.getElementById("d-next-txt").textContent=l.pd||"—";
   document.getElementById("d-next-date").textContent=hasVal(l.pa)?`Prazo: ${fmt(l.pa)}`:"Sem data definida";
-  document.getElementById("d-move").innerHTML=Object.keys(SC).map(s=>`<option value="${s}" ${s===l.status?"selected":""}>${escH(SC[s].lbl)}</option>`).join("");
+  document.getElementById("d-move").innerHTML=STAGES.map(st=>`<option value="${st.id}" ${st.id===SC[l.status]?.stage?"selected":""}>${escH(st.lbl)}</option>`).join("");
 
   const ctxSec=document.getElementById("d-context-section");
   if(l.fit||l.gatilho||l.hipotese){
@@ -1536,7 +1582,7 @@ function openDrawer(id,tab="resumo"){
     window._currentDraft=l.draft;
   }else{draftSec.style.display="none";window._currentDraft=null;}
 
-  document.getElementById("d-tech").innerHTML=[["ID",l.id],["Última atualização",fmt(l.ua)],["Primeiro contato",fmt(l.pc)],["Segmento",l.seg],["Na etapa desde",l.status_changed_at?fmt(dateSP(l.status_changed_at)):"—"],["Motivo de perda",l.motivo_perda||"—"]]
+  document.getElementById("d-tech").innerHTML=[["ID",l.id],["Última atualização",fmt(l.ua)],["Primeiro contato",fmt(l.pc)],["Segmento",segOf(l)||"—"],["Na etapa desde",l.status_changed_at?fmt(dateSP(l.status_changed_at)):"—"],["Motivo de perda",l.motivo_perda||"—"]]
     .map(([k,v])=>`<div class="d-field"><span class="fl">${escH(k)}</span><span class="fv">${escH(v)}</span></div>`).join("");
 
   openApolloSection(l);
@@ -1582,10 +1628,11 @@ async function setOwner(newOwnerId){
   toast(`Responsável: ${newOwnerId?teamName(newOwnerId):"ninguém"}`,"ok");
   render();
 }
-async function moveFromDrawer(status){
+async function moveFromDrawer(stageId){
   const lead=LEADS.find(l=>l.id===_currentDrawerId);if(!lead)return;
-  const ok=await changeStatus(lead,status);
-  if(!ok)document.getElementById("d-move").value=lead.status;
+  if(SC[lead.status]?.stage===stageId)return;
+  const ok=await changeStatus(lead,stageById(stageId).drop);
+  if(!ok)document.getElementById("d-move").value=SC[lead.status]?.stage;
 }
 async function saveLeadChanges(lead,changes){
   changes.ua=today();
@@ -1701,7 +1748,7 @@ function renderContactLog(lead){
 }
 function renderHistory(l){
   const LBL={status:"Etapa",responsavel:"Responsável",valor:"Valor",prazo:"Prazo"};
-  const val=(campo,v)=>!v?"—":campo==="status"?(SC[v]?.lbl||v):campo==="responsavel"?teamName(v):campo==="valor"?brl(v):campo==="prazo"?fmt(v):v;
+  const val=(campo,v)=>!v?"—":campo==="status"?stLabel(v):campo==="responsavel"?teamName(v):campo==="valor"?brl(v):campo==="prazo"?fmt(v):v;
   const rows=LEAD_HISTORY.filter(h=>h.lead_id===l.id).sort((a,b)=>a.created_at<b.created_at?1:-1);
   document.getElementById("d-history").innerHTML=rows.length?rows.map(h=>`<div class="tl-ev">${ic(h.campo==="status"?"arrowRight":h.campo==="valor"?"dollar":h.campo==="prazo"?"calendar":"user","sm")}
     <div style="flex:1"><b>${escH(LBL[h.campo]||h.campo)}:</b> ${escH(val(h.campo,h.de))} → ${escH(val(h.campo,h.para))}${h.user_id?` <span class="muted">· ${escH(teamName(h.user_id).split(" ")[0])}</span>`:""}</div>
@@ -1945,9 +1992,9 @@ async function removePerson(src,cid){
 
 // ── EDITAR LEAD (aba) ─────────────────────────────────────────────────────
 function renderEditPanel(lead){
-  const stOpts=Object.entries(SC).map(([k,v])=>`<option value="${k}" ${lead.status===k?'selected':''}>${v.lbl}</option>`).join('');
-  const segs=[...new Set([...Object.keys(SEG),...LEADS.map(l=>l.seg).filter(Boolean)])].sort(alpha);
-  const segOpts=segs.map(s=>`<option ${lead.seg===s?'selected':''}>${escH(s)}</option>`).join('');
+  const stOpts=STAGES.map(st=>`<option value="${st.id}" ${SC[lead.status]?.stage===st.id?'selected':''}>${escH(st.lbl)}</option>`).join('');
+  const segs=Object.keys(SEG).sort(alpha);
+  const segOpts=segs.map(s=>`<option ${segOf(lead)===s?'selected':''}>${escH(s)}</option>`).join('');
   const v=x=>escH(hasVal(x)?x:'');
   document.getElementById('d-edit-panel').innerHTML=`
     <div class="form-sec" style="margin-top:0">Empresa</div>
@@ -2005,7 +2052,9 @@ async function saveLeadEdit(){
     }
   }
   const g=eid=>document.getElementById(eid);
-  const newStatus=g('ef-status').value;
+  // Mantém a sub-situação (ex.: Aguardando · Follow-up) se a etapa não mudou.
+  const newStage=g('ef-status').value;
+  const newStatus=SC[lead.status]?.stage===newStage?lead.status:stageById(newStage).drop;
   const changes={
     empresa:g('ef-empresa').value.trim()||lead.empresa,
     seg:g('ef-seg').value,
@@ -2106,7 +2155,7 @@ function renderEmpresas(){
   const empMap={};
   LEADS.filter(ownerMatch).forEach(l=>{if(!empMap[l.empresa]||urgScore(l)>urgScore(empMap[l.empresa]))empMap[l.empresa]=l;});
   const groups={};
-  Object.values(empMap).forEach(l=>{(groups[l.seg||"Sem segmento"]=groups[l.seg||"Sem segmento"]||[]).push(l);});
+  Object.values(empMap).forEach(l=>{(groups[segOf(l)||"Sem segmento"]=groups[segOf(l)||"Sem segmento"]||[]).push(l);});
   const el=document.getElementById("emp-content");
   if(!Object.keys(groups).length){el.innerHTML=`<div class="empty">${ic("building")}<b>Nenhuma empresa ainda</b></div>`;return;}
   el.innerHTML=Object.keys(groups).sort(alpha).map(seg=>{
@@ -2178,7 +2227,8 @@ function renderDashboard(){
 }
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────
-const STAGE_PROB={"radar":.05,"qualificar":.08,"engajar":.12,"aguardar":.18,"agendar":.35,"reuniao":.5};
+const STAGE_PROB={"radar":.05,"qualificar":.08,"engajar":.12,"aguardando":.18,"agendar":.35,"reuniao":.5,"proposta":.7};
+const OPEN_STAGES=STAGES.filter(st=>!["fechado","perdido"].includes(st.id));
 function bars(rows,fmtVal=v=>v){
   const max=Math.max(1,...rows.map(r=>r.v));
   return rows.map(r=>`<div class="bar-row"><span class="lbl" title="${escH(r.l)}">${escH(r.l)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.v/max*100)}%;${r.c?`background:${r.c}`:""}"></div></div><span class="val">${fmtVal(r.v,r)}</span></div>`).join("");
@@ -2187,24 +2237,23 @@ function renderRelatorios(){
   const leads=LEADS.filter(ownerMatch);
   const active=leads.filter(isActive);
   // Valor
-  const colValor=KCOLS.slice(0,6).map(c=>({c,sum:active.filter(l=>c.statuses.includes(l.status)).reduce((s,l)=>s+(+l.valor||0),0)}));
+  const colValor=OPEN_STAGES.map(c=>({c,sum:active.filter(l=>c.statuses.includes(l.status)).reduce((s,l)=>s+(+l.valor||0),0)}));
   const totalAtivo=colValor.reduce((s,x)=>s+x.sum,0);
-  const proposta=active.filter(l=>l.status==="proposta").reduce((s,l)=>s+(+l.valor||0),0);
-  const ponderado=colValor.reduce((s,x)=>s+x.sum*(STAGE_PROB[x.c.id]||0),0)+proposta*.7;
+  const ponderado=colValor.reduce((s,x)=>s+x.sum*(STAGE_PROB[x.c.id]||0),0);
   const ganho=leads.filter(l=>l.status==="ganho").reduce((s,l)=>s+(+l.valor||0),0);
   const semValor=active.filter(l=>!(+l.valor)).length;
   // Funil: etapa mais avançada que cada lead já alcançou (histórico + etapa atual)
   // Perdido não conta como "chegou ao fim": vale a etapa em que estava antes de perder (pelo histórico).
-  const rank=s=>s==="ganho"?KCOLS.length:s==="perdido"?0:KCOLS.findIndex(c=>c.statuses.includes(s));
+  const rank=s=>s==="perdido"?0:STAGES.findIndex(st=>st.statuses.includes(s));
   const maxRank={};
   leads.forEach(l=>maxRank[l.id]=rank(l.status));
   LEAD_HISTORY.filter(h=>h.campo==="status").forEach(h=>{if(maxRank[h.lead_id]!==undefined)maxRank[h.lead_id]=Math.max(maxRank[h.lead_id],rank(h.de),rank(h.para));});
-  const funil=[...KCOLS.slice(0,6).map((c,i)=>({l:c.title,v:leads.filter(x=>maxRank[x.id]>=i).length})),{l:"Ganho",v:leads.filter(x=>x.status==="ganho").length,c:"var(--green)"}];
+  const funil=STAGES.filter(st=>st.id!=="perdido").map((st,i)=>({l:st.lbl,v:leads.filter(x=>maxRank[x.id]>=i).length,c:st.id==="fechado"?"var(--green)":""}));
   const base=Math.max(1,funil[0].v);
   // Tempo na etapa atual
-  const tempo=KCOLS.slice(0,6).map(c=>{
+  const tempo=OPEN_STAGES.map(c=>{
     const ls=active.filter(l=>c.statuses.includes(l.status)&&l.status_changed_at);
-    return{l:c.title,v:ls.length?Math.round(ls.reduce((s,l)=>s+(-daysDiff(dateSP(l.status_changed_at))),0)/ls.length):0,n:ls.length};
+    return{l:c.lbl,v:ls.length?Math.round(ls.reduce((s,l)=>s+(-daysDiff(dateSP(l.status_changed_at))),0)/ls.length):0,n:ls.length};
   });
   // Motivos de perda
   const perdidos=leads.filter(l=>l.status==="perdido");
@@ -2225,7 +2274,7 @@ function renderRelatorios(){
         <div class="stat-pair"><div><div class="big-num">${brl(totalAtivo+proposta)||"R$ 0"}</div><span>total em leads ativos</span></div>
         <div><div class="big-num" style="color:var(--gold-text)">${brl(ponderado)||"R$ 0"}</div><span>previsão ponderada pela etapa</span></div></div>
         <div class="stat-pair"><div><b>${brl(ganho)||"R$ 0"}</b><span>já ganho</span></div><div><b>${semValor}</b><span>leads ativos sem valor preenchido</span></div></div>
-        <div class="sub" style="margin:10px 0 0">Ponderação: Radar 5%, Qualificar 8%, Engajar 12%, Aguardar 18%, Agendar 35%, Reunião 50%, Proposta 70%.</div>
+        <div class="sub" style="margin:10px 0 0">Ponderação: Radar 5%, Qualificar 8%, Engajar 12%, Aguardando 18%, Agendar reunião 35%, Reunião 50%, Proposta 70%.</div>
       </div>
       <div class="card"><h3>${ic("filter")}Funil — até onde cada lead já chegou</h3>
         ${bars(funil,(v)=>`${v} · ${Math.round(v/base*100)}%`)}
@@ -2414,7 +2463,7 @@ function analyzeImport(text,ov){
 }
 async function openImportModal(){
   _importRows=[];
-  const segs=[...new Set([...Object.keys(SEG),...LEADS.map(l=>l.seg).filter(Boolean)])].sort(alpha);
+  const segs=Object.keys(SEG).sort(alpha);
   const go=await openModal({title:"Importar planilha (CSV)",icon:"upload",size:"wide",
     html:`<div class="drop-zone" id="imp-drop">${ic("upload","lg")}<div style="margin-top:6px">Arraste o arquivo .csv aqui ou <label style="color:var(--blue);cursor:pointer;text-decoration:underline">escolha no computador<input type="file" id="imp-file" accept=".csv,text/csv,.txt" hidden></label></div>
         <div style="font-size:11.5px;margin-top:4px">No Excel/Google Planilhas: Arquivo → Salvar como / Fazer download → CSV. Precisa ter uma coluna "Empresa".</div></div>
@@ -2438,7 +2487,7 @@ async function openImportModal(){
   if(!go)return;
   const rows=_importRows.filter(x=>x.flag==="novo").map(x=>({
     empresa:x.empresa,nome:x.nome||"—",cargo:x.cargo||"—",email:x.email||"—",tel:x.tel||"",canal:"LinkedIn",
-    seg:x.seg||go.seg,status:go.status,pc:null,ua:today(),pa:today(),pd:"Primeiro contato",val:false,
+    seg:(SEG_ALIAS[x.seg]||x.seg)||go.seg,status:go.status,pc:null,ua:today(),pa:today(),pd:"Primeiro contato",val:false,
     obs:x.obs||"",owner_user_id:go.owner,updated_by:CURRENT_USER_ID,linkedin:x.linkedin||null,valor:x.valor,
   }));
   toast(`Importando ${rows.length} leads…`);
@@ -2618,7 +2667,7 @@ function openNewLeadModal(){
   document.getElementById('nl-pa').value=today();
   document.getElementById('nl-more').style.display='none';
   document.getElementById('nl-more-lbl').textContent=NL_MORE_LBL;
-  const segs=[...new Set([...Object.keys(SEG),...LEADS.map(l=>l.seg).filter(Boolean)])].sort(alpha);
+  const segs=Object.keys(SEG).sort(alpha);
   document.getElementById('nl-seg').innerHTML=segs.map(s=>`<option ${s==="Varejo"?"selected":""}>${escH(s)}</option>`).join('');
   const ownerSel=document.getElementById('nl-owner');
   ownerSel.innerHTML='<option value="">Sem responsável</option>'+TEAM.map(t=>`<option value="${t.id}">${escH(t.nome)}${t.id===CURRENT_USER_ID?' (você)':''}</option>`).join('');
