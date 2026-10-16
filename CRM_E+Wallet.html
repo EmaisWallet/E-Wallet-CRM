@@ -2271,7 +2271,7 @@ function renderRelatorios(){
     <div class="filterbar"><span class="muted" style="font-size:12.5px">Responsável:</span><select onchange="cOwner=this.value;renderRelatorios()">${[["todos","Toda a equipe"],["me","Só os meus"],...TEAM.map(t=>[t.id,t.nome])].map(([v,n])=>`<option value="${v}" ${cOwner===v?"selected":""}>${escH(n)}</option>`).join("")}</select></div>
     <div class="rep-grid">
       <div class="card"><h3>${ic("dollar")}Valor em negociação</h3>
-        <div class="stat-pair"><div><div class="big-num">${brl(totalAtivo+proposta)||"R$ 0"}</div><span>total em leads ativos</span></div>
+        <div class="stat-pair"><div><div class="big-num">${brl(totalAtivo)||"R$ 0"}</div><span>total em leads ativos</span></div>
         <div><div class="big-num" style="color:var(--gold-text)">${brl(ponderado)||"R$ 0"}</div><span>previsão ponderada pela etapa</span></div></div>
         <div class="stat-pair"><div><b>${brl(ganho)||"R$ 0"}</b><span>já ganho</span></div><div><b>${semValor}</b><span>leads ativos sem valor preenchido</span></div></div>
         <div class="sub" style="margin:10px 0 0">Ponderação: Radar 5%, Qualificar 8%, Engajar 12%, Aguardando 18%, Agendar reunião 35%, Reunião 50%, Proposta 70%.</div>
