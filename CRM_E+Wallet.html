@@ -143,7 +143,7 @@ a{color:var(--blue)}
 .side-item:hover .rm{opacity:1}
 .side-empty{font-size:11.5px;color:var(--gold-ink-2);padding:2px 8px}
 .sidebar-foot{border-top:1px solid rgba(31,26,14,.14);padding-top:8px;display:flex;align-items:center;gap:2px}
-.side-user{flex:1;min-width:0;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding-left:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.side-user{flex:1;min-width:0;display:flex;background:none;border:0;color:inherit;cursor:pointer;text-align:left;border-radius:var(--radius-sm);height:30px;align-items:center;gap:7px;font-size:12px;font-weight:700;padding-left:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sidebar .icon-btn{color:var(--gold-ink);width:30px;height:30px}
 .sidebar .icon-btn:hover{background:rgba(255,255,255,.35);color:var(--gold-ink)}
 .sidebar-close{display:none}
@@ -198,6 +198,8 @@ a{color:var(--blue)}
 .kpi span{font-size:12px;color:var(--text-3);font-weight:500}
 .kpi.warn b{color:var(--red)}
 .kpi.static{cursor:default}
+.kpi-who{align-items:center;background:var(--gold-soft);border-color:transparent}
+.kpi-who span{color:var(--text-2);font-weight:600}
 
 /* ── Barra de filtros do pipeline ────────────────────────── */
 .filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
@@ -526,7 +528,7 @@ a{color:var(--blue)}
     </div>
 
     <div class="sidebar-foot">
-      <div class="side-user"><svg class="ico" data-i="user"></svg><span id="side-user"></span></div>
+      <button class="side-user" type="button" onclick="openProfile()" title="Meu perfil"><svg class="ico" data-i="user"></svg><span id="side-user"></span></button>
       <button class="icon-btn foot-extra" type="button" onclick="toggleTheme()" title="Tema claro/escuro"><svg class="ico" data-i="moon"></svg></button>
       <button class="icon-btn foot-extra" type="button" onclick="toggleDensity()" title="Densidade: confortável/compacta"><svg class="ico" data-i="rows"></svg></button>
       <button class="icon-btn collapse-btn" type="button" onclick="toggleSidebarCollapsed()" title="Recolher/expandir menu" id="collapse-btn"><svg class="ico" data-i="panelClose"></svg></button>
@@ -618,7 +620,8 @@ a{color:var(--blue)}
         <label class="field full">Empresa *<input id="nl-empresa" placeholder="Nome da empresa" required></label>
         <label class="field">Nome do contato<input id="nl-nome" placeholder="Nome Sobrenome"></label>
         <label class="field">Cargo<input id="nl-cargo" placeholder="Ex: Diretor Comercial"></label>
-        <label class="field full">Email<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
+        <label class="field">Email corporativo<input id="nl-email" type="email" placeholder="nome@empresa.com.br"></label>
+        <label class="field">Email pessoal<input id="nl-email_pessoal" type="email" placeholder="nome@gmail.com"></label>
         <label class="field full">LinkedIn (link do perfil)<input id="nl-linkedin" type="url" placeholder="https://www.linkedin.com/in/perfil"></label>
         <label class="field">Etapa<select id="nl-status">
           <option value="no-radar">Radar</option>
@@ -638,7 +641,8 @@ a{color:var(--blue)}
         </div>
         <div class="form-sec">Contato</div>
         <div class="form-grid">
-          <label class="field">Telefone<input id="nl-tel" placeholder="11 99999-9999"></label>
+          <label class="field">Telefone da empresa<input id="nl-tel_empresa" placeholder="11 3333-4444"></label>
+          <label class="field">Celular pessoal<input id="nl-tel" placeholder="11 99999-9999"></label>
           <label class="field">Canal<input id="nl-canal" placeholder="Email / LinkedIn / WhatsApp" value="LinkedIn"></label>
         </div>
         <div class="form-sec">Pipeline</div>
@@ -704,12 +708,6 @@ a{color:var(--blue)}
             <label class="field">Data<input type="date" id="cl-date" onchange="updateContactPreview()"></label>
             <label class="field">Meio<select id="cl-channel" onchange="updateContactPreview()">
               <option>LinkedIn</option><option>Email</option><option>WhatsApp</option><option>Ligação</option><option>Reunião</option><option>Outro</option>
-            </select></label>
-            <label class="field">Resultado<select id="cl-result">
-              <option value="aguardando">Aguardando resposta</option>
-              <option value="respondeu">Respondeu</option>
-              <option value="reuniao-agendada">Reunião agendada</option>
-              <option value="sem-interesse">Sem interesse</option>
             </select></label>
           </div>
           <div class="cl-who-lbl">Com quem? <span>(cada pessoa marcada conta no dashboard)</span></div>
@@ -781,8 +779,10 @@ a{color:var(--blue)}
           <div class="form-grid">
             <label class="field">Nome<input id="nc-nome" placeholder="Nome Sobrenome"></label>
             <label class="field">Cargo<input id="nc-cargo" placeholder="Cargo"></label>
-            <label class="field">Email<input id="nc-email" type="email" placeholder="email@empresa.com"></label>
-            <label class="field">Telefone<input id="nc-tel" placeholder="11 99999-9999"></label>
+            <label class="field">Email corporativo<input id="nc-email" type="email" placeholder="nome@empresa.com.br"></label>
+            <label class="field">Email pessoal<input id="nc-email_pessoal" type="email" placeholder="nome@gmail.com"></label>
+            <label class="field">Telefone da empresa<input id="nc-tel_empresa" placeholder="11 3333-4444"></label>
+            <label class="field">Celular pessoal<input id="nc-tel" placeholder="11 99999-9999"></label>
             <label class="field full">LinkedIn<input id="nc-li" placeholder="linkedin.com/in/perfil"></label>
           </div>
           <div class="inline-form-err" id="nc-err"></div>
@@ -840,6 +840,7 @@ const STAGES = [
   {id:"agendar",    lbl:"Agendar reunião", ic:"calendar",  c:"#14B8A6", statuses:["agendamento"],                           drop:"agendamento"},
   {id:"reuniao",    lbl:"Reunião",         ic:"handshake", c:"#16A34A", statuses:["reuniao"],                               drop:"reuniao"},
   {id:"proposta",   lbl:"Proposta",        ic:"file",      c:"#DAA520", statuses:["proposta"],                              drop:"proposta"},
+  {id:"pausado",    lbl:"Pausado",         ic:"clock",     c:"#94A3B8", statuses:["pausado"],                               drop:"pausado"},
   {id:"fechado",    lbl:"Fechado",         ic:"trophy",    c:"#15803D", statuses:["ganho"],                                 drop:"ganho"},
   {id:"perdido",    lbl:"Perdido",         ic:"xCircle",   c:"#6B7280", statuses:["perdido"],                               drop:"perdido"},
 ];
@@ -887,8 +888,9 @@ const TEAM = [
   {id:"marciasaluto", nome:"Marcia Saluto"},
   {id:"gaby",         nome:"Gaby"},
 ];
-function teamName(id){ return TEAM.find(t=>t.id===id)?.nome || id || ""; }
+function teamName(id){ return (id&&id===CURRENT_USER_ID&&MY_PROFILE.nome) || TEAM.find(t=>t.id===id)?.nome || id || ""; }
 let CURRENT_USER_ID = null;
+let MY_PROFILE = {};            // user_metadata do Supabase Auth (nome, cargo, telefone, email)
 const ADMIN_USER_ID = "leonardo";
 let CONTACT_LOG = [];
 let LEAD_HISTORY = [];
@@ -1048,8 +1050,8 @@ const MAX_PEOPLE=3;
 let CONTACTS = {};
 function leadPeople(l){
   const out=[];
-  if(hasVal(l.nome)||hasVal(l.email))out.push({src:"lead",id:l.id,nome:hasVal(l.nome)?l.nome:"",cargo:hasVal(l.cargo)?l.cargo:"",email:hasVal(l.email)?l.email:"",tel:l.tel||"",li:l.linkedin||""});
-  (CONTACTS[l.id]||[]).forEach(c=>out.push({src:"extra",id:c.id,nome:c.nome||"",cargo:c.cargo||"",email:c.email||"",tel:c.tel||"",li:c.li||""}));
+  if(hasVal(l.nome)||hasVal(l.email))out.push({src:"lead",id:l.id,nome:hasVal(l.nome)?l.nome:"",cargo:hasVal(l.cargo)?l.cargo:"",email:hasVal(l.email)?l.email:"",email_pessoal:l.email_pessoal||"",tel:l.tel||"",tel_empresa:l.tel_empresa||"",li:l.linkedin||""});
+  (CONTACTS[l.id]||[]).forEach(c=>out.push({src:"extra",id:c.id,nome:c.nome||"",cargo:c.cargo||"",email:c.email||"",email_pessoal:c.email_pessoal||"",tel:c.tel||"",tel_empresa:c.tel_empresa||"",li:c.li||""}));
   return out.slice(0,MAX_PEOPLE);
 }
 const firstName=n=>(n||"").trim().split(/\s+/)[0]||"";
@@ -1202,7 +1204,7 @@ const cleanObs=obs=>(obs||"").replace(/\s*\d{2}\/\d{2}\/\d{4}: Contato #\d+ via 
 // ── SUGESTÃO DE PRÓXIMA AÇÃO + PONTUAÇÃO (regras, não IA) ─────────────────
 // Pontuação 0–100 de chance de avanço, a partir de etapa, respostas, fit e ritmo dos
 // contatos. Transparente de propósito: o "por quê" aparece junto da sugestão.
-const STAGE_BASE={"no-radar":10,"apollo-pendente":18,"email-preparado":28,"reengajamento":22,"aguardando":32,"follow-up":28,"nao-entregue":12,"agendamento":65,"reuniao":75,"proposta":85,"ganho":100,"perdido":0};
+const STAGE_BASE={"no-radar":10,"apollo-pendente":18,"email-preparado":28,"reengajamento":22,"aguardando":32,"follow-up":28,"nao-entregue":12,"agendamento":65,"reuniao":75,"proposta":85,"ganho":100,"perdido":0,"pausado":15};
 function leadInsight(l){
   const events=contactEvents(l);
   const people=leadPeople(l);
@@ -1240,6 +1242,10 @@ function leadInsight(l){
   else if(noReplyStreak>=3&&people.length<MAX_PEOPLE){action="Sem resposta há várias tentativas: adicionar outra pessoa da empresa e abordá-la.";}
   else if(noReplyStreak>=3&&otherCh){action=`Mudar de canal: tentar pelo ${otherCh}.`;}
   else action=`Follow-up com ${nome||"o contato"}${otherCh&&tries>=2?` — considere o ${otherCh}`:""}.`;
+  // Etapas do pipeline que têm grupo próprio de modelos.
+  if(l.status==="agendamento"&&lastMeetingIdx<0)etapa="agendar";
+  else if(l.status==="proposta")etapa="proposta";
+  else if(["reengajamento","pausado"].includes(l.status))etapa="reengajar";
   return{score:s,hot:s>=70,action,why:why.join(" · "),etapa};
 }
 
@@ -1297,7 +1303,7 @@ function filtered(){
     }
     if(pq.seg&&!segOf(l).toLowerCase().includes(pq.seg))return false;
     if(pq.text.length){
-      const hay=[l.empresa,l.nome,l.email,l.tel,...(CONTACTS[l.id]||[]).flatMap(c=>[c.nome,c.email,c.tel])].map(v=>(v||"").toLowerCase()).join(" ");
+      const hay=[l.empresa,l.nome,l.email,l.email_pessoal,l.tel,l.tel_empresa,...(CONTACTS[l.id]||[]).flatMap(c=>[c.nome,c.email,c.email_pessoal,c.tel,c.tel_empresa])].map(v=>(v||"").toLowerCase()).join(" ");
       if(!pq.text.every(t=>hay.includes(t)))return false;
     }
     return true;
@@ -1306,20 +1312,23 @@ function filtered(){
 function clearFilters(){cSeg="todos";cStatus="todos";cOwner="todos";q="";document.getElementById("search").value="";render();}
 
 // ── TOPO: KPIs, aviso, filtros ativos ─────────────────────────────────────
-const isActive=l=>l.status!=="ganho"&&l.status!=="perdido";
+const isActive=l=>!["ganho","perdido","pausado"].includes(l.status);
+// As caixinhas do topo mostram só os números de quem está logado (leads em que é o responsável).
 function renderStats(){
-  const active=LEADS.filter(isActive);
   const urg=LEADS.filter(l=>isHoje(l)&&isUrg(l)).length;
-  const valor=active.reduce((s,l)=>s+(+l.valor||0),0);
-  const k=(key,n,lbl,cls="")=>`<div class="kpi ${cls}${cStatus===key?" active":""}" ${key?`onclick="kpiFilter('${key}')"`:""}><b>${n}</b><span>${lbl}</span></div>`;
+  const mine=LEADS.filter(l=>l.owner_user_id===CURRENT_USER_ID);
+  const myUrg=mine.filter(l=>isHoje(l)&&isUrg(l)).length;
+  const inStage=id=>mine.filter(l=>SC[l.status]?.stage===id).length;
+  const on=key=>cStatus===key&&cOwner==="me";
+  const k=(key,n,lbl,cls="")=>`<div class="kpi ${cls}${on(key)?" active":""}" onclick="kpiFilter('${key}')"><b>${n}</b><span>${lbl}</span></div>`;
   document.getElementById("kpis").innerHTML=
-    k("todos",active.length,"leads ativos")+
-    k("urgente",urg,"urgentes hoje",urg?"warn":"")+
-    k("aguardando",LEADS.filter(l=>SC[l.status]?.stage==="aguardando").length,"aguardando")+
-    k("agendar",LEADS.filter(l=>SC[l.status]?.stage==="agendar").length,"agendar reunião")+
-    k("reuniao",LEADS.filter(l=>SC[l.status]?.stage==="reuniao").length,"em reunião")+
-    k("proposta",LEADS.filter(l=>SC[l.status]?.stage==="proposta").length,"proposta")+
-    (valor?`<div class="kpi static" title="Soma do valor estimado dos leads ativos"><b>${brlShort(valor)}</b><span>em negociação</span></div>`:"");
+    `<div class="kpi static kpi-who" title="Números dos leads em que você é o responsável">${ic("user","sm")}<span>Meus números</span></div>`+
+    k("urgente",myUrg,"urgentes hoje",myUrg?"warn":"")+
+    k("aguardando",inStage("aguardando"),"aguardando")+
+    k("agendar",inStage("agendar"),"agendando reunião")+
+    k("proposta",inStage("proposta"),"proposta enviada")+
+    k("fechado",inStage("fechado"),"fechado / ganho")+
+    k("perdido",inStage("perdido"),"perdido");
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("nav-urgent-cnt",urg);
   document.getElementById("nav-urgent-cnt").toggleAttribute("data-zero",!urg);
@@ -1327,7 +1336,10 @@ function renderStats(){
   set("ps-empresas",new Set(LEADS.map(l=>l.empresa)).size);
   set("ps-pendentes",LEADS.filter(isUrg).length);
 }
-function kpiFilter(key){cStatus=cStatus===key?"todos":key;if(curView!=="pipeline")showView("pipeline");else render();}
+function kpiFilter(key){
+  if(cStatus===key&&cOwner==="me"){cStatus="todos";cOwner="todos";}else{cStatus=key;cOwner="me";}
+  if(curView!=="pipeline")showView("pipeline");else render();
+}
 function renderNoActionAlert(){
   const n=LEADS.filter(hasNoAction).length;
   const el=document.getElementById("no-action-alert");
@@ -1468,7 +1480,7 @@ function renderSidebarFilters(){
   const stCount={};LEADS.forEach(l=>{const k=SC[l.status]?.stage;stCount[k]=(stCount[k]||0)+1;});
   document.getElementById("status-filter-body").innerHTML=
     sideBtn("data-status","todos",`<span class="lbl">Todos</span>`,LEADS.length,cStatus==="todos")+
-    [...STAGES].sort((a,b)=>alpha(a.lbl,b.lbl)).map(st=>sideBtn("data-status",st.id,`<span class="sw" style="background:${st.c}"></span><span class="lbl">${escH(st.lbl)}</span>`,stCount[st.id]||0,stageKey(cStatus)===st.id)).join("");
+    STAGES.map(st=>sideBtn("data-status",st.id,`<span class="sw" style="background:${st.c}"></span><span class="lbl">${escH(st.lbl)}</span>`,stCount[st.id]||0,stageKey(cStatus)===st.id)).join("");
   const onPipe=curView==="pipeline";
   document.getElementById("nav-urgent").classList.toggle("active",onPipe&&cStatus==="urgente");
   document.querySelectorAll(".side-item[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===curView&&!(curView==="pipeline"&&cStatus==="urgente")));
@@ -1539,7 +1551,6 @@ function openDrawer(id,tab="resumo"){
   _drawerLoadedUpdatedAt=l.updated_at||null;
   document.getElementById("cl-date").value=today();
   document.getElementById("cl-channel").value=CONTACT_CHANNELS.includes(l.canal)?l.canal:"LinkedIn";
-  document.getElementById("cl-result").value="aguardando";
   document.getElementById("cl-note").value="";
   _clWhoTouched=false;
   toggleRegister(false);
@@ -1736,7 +1747,6 @@ function renderContactLog(lead){
         <input type="date" id="cle-date" value="${d}">
         <select id="cle-channel">${CONTACT_CHANNELS.map(x=>`<option ${x===c.channel?"selected":""}>${x}</option>`).join("")}</select>
         <select id="cle-who"><option value="">(sem nome)</option>${names.map(n=>`<option ${n===c.contato_nome?"selected":""}>${escH(n)}</option>`).join("")}</select>
-        <select id="cle-result">${Object.entries(RESULT_LBL).map(([k,v])=>`<option value="${k}" ${k===(c.resultado||"aguardando")?"selected":""}>${v}</option>`).join("")}</select>
         <input type="text" id="cle-note" value="${escH(c.nota||"")}" placeholder="O que aconteceu? (opcional)" style="flex:1 1 100%">
         <button class="btn primary sm" type="button" onclick="saveContactEdit('${cid}')">Salvar</button>
         <button class="btn sm" type="button" onclick="cancelContactEdit()">Cancelar</button></div>`;
@@ -1784,7 +1794,7 @@ async function addContact(){
   const lead=LEADS.find(l=>l.id===_currentDrawerId);if(!lead)return;
   const date=document.getElementById("cl-date").value;
   const channel=document.getElementById("cl-channel").value;
-  const resultado=document.getElementById("cl-result").value||"aguardando";
+  const resultado="aguardando";
   const nota=document.getElementById("cl-note").value.trim()||null;
   if(!date){toast("Informe a data do contato.","error");return;}
   if(date>today()){toast("A data do contato não pode estar no futuro.","error");return;}
@@ -1805,7 +1815,7 @@ async function saveContactEdit(cid){
   if(!date){toast("Informe a data do contato.","error");return;}
   if(date>today()){toast("A data do contato não pode estar no futuro.","error");return;}
   const patch={contacted_on:date,channel,contato_nome:document.getElementById("cle-who").value||null,
-    resultado:document.getElementById("cle-result").value||"aguardando",nota:document.getElementById("cle-note").value.trim()||null};
+    nota:document.getElementById("cle-note").value.trim()||null};
   const before=leadContacts(lead.id);
   const wasLatest=String(before[before.length-1]?.id)===String(cid);
   const{data,error}=await sbWrite(p=>sb.from('contact_log').update(p).eq('id',cid).select(),patch);
@@ -1836,20 +1846,66 @@ async function deleteContact(cid){
   render();openDrawer(lead.id,"historico");
 }
 
+// ── MEU PERFIL ────────────────────────────────────────────────────────────
+// Dados pessoais ficam no user_metadata do Supabase Auth (não precisa de tabela).
+async function openProfile(){
+  const me=CURRENT_USER_ID,P=MY_PROFILE,v=x=>escH(x||"");
+  const mine=LEADS.filter(l=>l.owner_user_id===me);
+  const month=today().slice(0,7);
+  const myLogs=CONTACT_LOG.filter(c=>c.user_id===me);
+  const st=id=>mine.filter(l=>SC[l.status]?.stage===id).length;
+  const stats=[[mine.filter(isActive).length,"leads ativos"],[myLogs.filter(c=>(c.contacted_on||"").startsWith(month)).length,"contatos no mês"],
+    [st("agendar")+st("reuniao"),"reuniões"],[st("proposta"),"propostas"],[st("fechado"),"fechados"],[st("perdido"),"perdidos"]];
+  const res=await openModal({title:"Meu perfil",icon:"user",html:`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar lg" style="background:var(--gold);color:#fff">${escH(initials(teamName(me)))}</div>
+      <div><div style="font-weight:700;font-size:15px">${escH(teamName(me))}</div><div class="muted" style="font-size:12px">Usuário: ${escH(me)}${me===ADMIN_USER_ID?" · administrador":""}</div></div>
+    </div>
+    <div class="kpis">${stats.map(([n,l])=>`<div class="kpi static"><b>${n}</b><span>${l}</span></div>`).join("")}</div>
+    <div class="form-grid">
+      <label class="field">Nome de exibição<input id="pf-nome" value="${v(P.nome||teamName(me))}"></label>
+      <label class="field">Cargo<input id="pf-cargo" value="${v(P.cargo)}" placeholder="Ex: Executiva de contas"></label>
+      <label class="field">Email de trabalho<input id="pf-email" type="email" value="${v(P.email)}" placeholder="voce@emaiswallet.com.br"></label>
+      <label class="field">Celular / WhatsApp<input id="pf-tel" value="${v(P.tel)}" placeholder="11 99999-9999"></label>
+      <label class="field full">Assinatura das mensagens<textarea id="pf-assinatura" rows="3" placeholder="Ex: Gaby · E+ Wallet · (11) 99999-9999">${escT(P.assinatura||"")}</textarea></label>
+    </div>
+    <div class="sub" style="margin-top:8px">O nome de exibição entra no lugar de {meu_nome} nos modelos de mensagem; a assinatura, no lugar de {assinatura}.</div>`,
+    buttons:[{label:"Cancelar",value:null},{label:"Salvar perfil",cls:"primary",icon:"save",value:ov=>{
+      const g=id=>ov.querySelector("#"+id).value.trim();
+      return{nome:g("pf-nome"),cargo:g("pf-cargo"),email:g("pf-email"),tel:g("pf-tel"),assinatura:g("pf-assinatura")};}}]});
+  if(!res)return;
+  const{data,error}=await withTimeout(sb.auth.updateUser({data:res}));
+  if(error){toast("Erro ao salvar perfil: "+error.message,"error");return;}
+  MY_PROFILE=data?.user?.user_metadata||res;
+  document.getElementById("side-user").textContent=teamName(me);
+  toast("Perfil salvo","ok");render();
+}
+
 // ── MODELOS DE MENSAGEM ───────────────────────────────────────────────────
-const TPL_ETAPAS={"primeiro-contato":"Primeiro contato","follow-up":"Follow-up","pos-reuniao":"Pós-reunião","outro":"Outro"};
+const TPL_ETAPAS={"primeiro-contato":"Primeiro contato","follow-up":"Follow-up","agendar":"Agendar reunião","pos-reuniao":"Pós-reunião","proposta":"Proposta","reengajar":"Reengajar / pausado","outro":"Outro"};
 // Modelos padrão: usados enquanto a tabela msg_templates não existe ou está vazia.
 const DEFAULT_TEMPLATES=[
   {id:"d1",etapa:"primeiro-contato",canal:"LinkedIn",titulo:"1º contato — LinkedIn",corpo:"Olá {nome}, tudo bem? Sou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e incentivos do time. Ajudamos empresas a centralizar isso numa carteira digital, com controle e relatório. Faz sentido conversarmos 15 minutos esta semana?"},
   {id:"d2",etapa:"primeiro-contato",canal:"WhatsApp",titulo:"1º contato — WhatsApp",corpo:"Oi {nome}, tudo bem? Aqui é {meu_nome}, da E+ Wallet. Trabalhamos com premiação e incentivo para equipes via carteira digital e acredito que pode fazer sentido para a {empresa}. Posso te mostrar em 15 minutos?"},
   {id:"d3",etapa:"follow-up",canal:"WhatsApp",titulo:"Follow-up curto",corpo:"Oi {nome}, passando para retomar minha mensagem sobre a E+ Wallet. Faz sentido conversarmos esta semana? Se não for com você, pode me indicar a pessoa certa na {empresa}?"},
   {id:"d4",etapa:"follow-up",canal:"Email",titulo:"Follow-up por e-mail",corpo:"Olá {nome},\n\nRetomando meu contato anterior: a E+ Wallet ajuda empresas como a {empresa} a organizar premiações e incentivos em uma carteira digital, com controle total para o RH e o comercial.\n\nTem 15 minutos nos próximos dias para eu te mostrar como funciona?\n\nAbraço,\n{meu_nome}"},
+  {id:"d6",etapa:"follow-up",canal:"WhatsApp",titulo:"Pedido de indicação",corpo:"Oi {nome}, tudo bem? Tentei falar com você algumas vezes sobre a E+ Wallet. Se esse assunto não for com você, consegue me indicar quem cuida de premiação e incentivo na {empresa}? Obrigado!"},
+  {id:"d7",etapa:"agendar",canal:"WhatsApp",titulo:"Confirmar horário",corpo:"Oi {nome}! Que bom que faz sentido conversarmos. Tenho estes horários livres: [opção 1] ou [opção 2]. Qual fica melhor para você? Te mando o convite com o link."},
+  {id:"d8",etapa:"agendar",canal:"Email",titulo:"Convite de reunião",corpo:"Olá {nome},\n\nConforme combinamos, segue o convite para nossa conversa sobre a E+ Wallet na {empresa}.\n\nPauta (15 min):\n- Como funcionam hoje as premiações e incentivos\n- Como a carteira digital E+ Wallet centraliza isso\n- Próximos passos\n\nAté lá!\n{assinatura}"},
   {id:"d5",etapa:"pos-reuniao",canal:"WhatsApp",titulo:"Pós-reunião",corpo:"Oi {nome}, obrigado pela conversa! Como combinamos, sigo à disposição para darmos o próximo passo com a {empresa}. Qual o melhor momento para alinharmos a proposta?"},
+  {id:"d9",etapa:"proposta",canal:"Email",titulo:"Envio da proposta",corpo:"Olá {nome},\n\nComo combinamos, segue a proposta da E+ Wallet para a {empresa}. Ela cobre o formato da carteira, a operação das premiações e os prazos de implantação.\n\nFico à disposição para ajustar o que precisar. Podemos falar esta semana para tirar dúvidas?\n\n{assinatura}"},
+  {id:"d10",etapa:"proposta",canal:"WhatsApp",titulo:"Follow-up da proposta",corpo:"Oi {nome}, tudo bem? Conseguiu dar uma olhada na proposta da E+ Wallet? Se quiser, marcamos 15 minutos para eu tirar as dúvidas do time da {empresa}."},
+  {id:"d11",etapa:"reengajar",canal:"WhatsApp",titulo:"Retomar contato",corpo:"Oi {nome}, tudo bem? Conversamos há um tempo sobre premiação e incentivo na {empresa}. Mudou algo por aí? Se fizer sentido, retomamos com uma conversa rápida."},
 ];
-const allTemplates=()=>TEMPLATES&&TEMPLATES.length?TEMPLATES:DEFAULT_TEMPLATES;
+// Modelos do banco + os padrões das etapas que o banco ainda não cobre (assim as etapas novas aparecem).
+const allTemplates=()=>{
+  if(!TEMPLATES||!TEMPLATES.length)return DEFAULT_TEMPLATES;
+  const has=new Set(TEMPLATES.map(t=>t.etapa));
+  return[...TEMPLATES,...DEFAULT_TEMPLATES.filter(t=>!has.has(t.etapa))];
+};
 function fillTemplate(t,l,personName){
   const p=leadPeople(l).find(x=>(x.nome||x.email)===personName)||leadPeople(l)[0]||{};
-  const map={nome:firstName(p.nome)||"tudo bem",empresa:l.empresa,cargo:p.cargo||"liderança",meu_nome:firstName(teamName(CURRENT_USER_ID))||"equipe E+"};
+  const map={nome:firstName(p.nome)||"tudo bem",empresa:l.empresa,cargo:p.cargo||"liderança",meu_nome:firstName(teamName(CURRENT_USER_ID))||"equipe E+",assinatura:MY_PROFILE.assinatura||teamName(CURRENT_USER_ID)||"Equipe E+ Wallet"};
   return t.corpo.replace(/\{(\w+)\}/g,(m,k)=>map[k]??m);
 }
 function renderTemplatePicker(l){
@@ -1897,7 +1953,7 @@ function renderExtraContacts(leadId){
     return`<div class="person-card">${avatarHtml(p.nome||p.email)}
       <div class="person-info">
         <div class="person-name">${escH(p.nome||'(sem nome)')}${p.cargo?` <span class="person-cargo">· ${escH(p.cargo)}</span>`:''}</div>
-        <div class="person-meta">${escH([p.email,p.tel].filter(Boolean).join(' · '))||'—'}</div>
+        <div class="person-meta">${[[p.email,'Corp.'],[p.email_pessoal,'Pessoal'],[p.tel_empresa,'Empresa'],[p.tel,'Celular']].filter(x=>x[0]).map(([v,t])=>`<span class="muted">${t}:</span> ${escH(v)}`).join(' · ')||'—'}</div>
         ${li?`<a class="person-li" href="${escH(li)}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>`:''}
       </div>
       <button class="icon-btn" type="button" onclick="editPerson('${p.src}',${p.id})" title="Editar">${ic("pencil","sm")}</button>
@@ -1906,7 +1962,7 @@ function renderExtraContacts(leadId){
   }).join('');
 }
 function fillPersonForm(p){
-  ['nome','cargo','email','tel','li'].forEach(k=>{const el=document.getElementById('nc-'+k);el.value=p?.[k]||'';el.classList.remove('err');});
+  ['nome','cargo','email','email_pessoal','tel','tel_empresa','li'].forEach(k=>{const el=document.getElementById('nc-'+k);el.value=p?.[k]||'';el.classList.remove('err');});
   document.getElementById('nc-err').textContent='';
 }
 function toggleAddContactForm(){
@@ -1934,9 +1990,9 @@ async function saveExtraContact(){
   const lead=LEADS.find(l=>l.id===id);
   if(!lead||!_personEdit)return;
   const g=k=>document.getElementById(k).value.trim();
-  const p={nome:g('nc-nome'),cargo:g('nc-cargo'),email:g('nc-email'),tel:g('nc-tel'),li:g('nc-li')};
+  const p={nome:g('nc-nome'),cargo:g('nc-cargo'),email:g('nc-email'),email_pessoal:g('nc-email_pessoal'),tel:g('nc-tel'),tel_empresa:g('nc-tel_empresa'),li:g('nc-li')};
   const errEl=document.getElementById('nc-err');
-  if(!p.nome&&!p.email){document.getElementById('nc-nome').classList.add('err');document.getElementById('nc-nome').focus();errEl.textContent='Informe pelo menos o nome ou o email.';return;}
+  if(!p.nome&&!p.email&&!p.email_pessoal){document.getElementById('nc-nome').classList.add('err');document.getElementById('nc-nome').focus();errEl.textContent='Informe pelo menos o nome ou o email.';return;}
   const li=p.li?safeLinkedin(p.li):'';
   if(p.li&&!li){errEl.textContent='O link do LinkedIn precisa ser de linkedin.com.';return;}
   const btn=document.getElementById('nc-save');btn.disabled=true;
@@ -1946,23 +2002,24 @@ async function saveExtraContact(){
     // Lead sem pessoa ainda: a nova vira a #1 (colunas do próprio lead).
     const target=_personEdit.src==='new'?(people.some(x=>x.src==='lead')?'extra-new':'lead'):_personEdit.src;
     if(target==='lead'){
-      const changes={nome:p.nome||'—',cargo:p.cargo||'—',email:p.email||'—',tel:p.tel};
+      const changes={nome:p.nome||'—',cargo:p.cargo||'—',email:p.email||'—',email_pessoal:p.email_pessoal||null,tel:p.tel,tel_empresa:p.tel_empresa||null};
       if((li||null)!==(lead.linkedin||null))changes.linkedin=li||null;
       const err=await saveLeadChanges(lead,changes);
       if(err){errEl.textContent='Erro ao salvar: '+err.message;return;}
     }else if(target==='extra-new'){
-      const{data,error}=await sb.from('lead_contacts').insert({lead_id:id,...p,li}).select().single();
+      const{data:rows,error}=await sbWrite(x=>sb.from('lead_contacts').insert(x).select(),{lead_id:id,...p,li});
+      const data=rows&&rows[0];
       if(error||!data){errEl.textContent='Erro ao salvar: '+(error?.message||'sem resposta do banco');return;}
       (CONTACTS[id]=CONTACTS[id]||[]).push(data);
     }else{
       const cid=_personEdit.id;
-      let{data,error}=await sb.from('lead_contacts').update({...p,li}).eq('id',cid).select();
+      let{data,error}=await sbWrite(x=>sb.from('lead_contacts').update(x).eq('id',cid).select(),{...p,li});
       // Sem policy de UPDATE o banco devolve 0 linhas sem erro — aí recria (insert + delete).
       if(!error&&(!data||!data.length)){
-        const ins=await sb.from('lead_contacts').insert({lead_id:id,...p,li}).select().single();
-        if(ins.error||!ins.data){errEl.textContent='Erro ao salvar: '+(ins.error?.message||'sem resposta');return;}
+        const ins=await sbWrite(x=>sb.from('lead_contacts').insert(x).select(),{lead_id:id,...p,li});
+        if(ins.error||!ins.data?.length){errEl.textContent='Erro ao salvar: '+(ins.error?.message||'sem resposta');return;}
         await sb.from('lead_contacts').delete().eq('id',cid);
-        data=[ins.data];
+        data=ins.data;
       }
       if(error){errEl.textContent='Erro ao salvar: '+error.message;return;}
       CONTACTS[id]=(CONTACTS[id]||[]).map(c=>String(c.id)===String(cid)?data[0]:c);
@@ -1984,7 +2041,7 @@ async function removePerson(src,cid){
   }else{
     // Removendo a #1: a próxima sobe pras colunas do lead, pra empresa não ficar sem pessoa principal.
     const next=(CONTACTS[leadId]||[])[0];
-    const changes=next?{nome:next.nome||'—',cargo:next.cargo||'—',email:next.email||'—',tel:next.tel||'',linkedin:next.li||null}:{nome:'—',cargo:'—',email:'—',tel:'',linkedin:null};
+    const changes=next?{nome:next.nome||'—',cargo:next.cargo||'—',email:next.email||'—',email_pessoal:next.email_pessoal||null,tel:next.tel||'',tel_empresa:next.tel_empresa||null,linkedin:next.li||null}:{nome:'—',cargo:'—',email:'—',email_pessoal:null,tel:'',tel_empresa:null,linkedin:null};
     const err=await saveLeadChanges(lead,changes);
     if(err){toast('Erro ao remover: '+err.message,'error');return;}
     if(next){await sb.from('lead_contacts').delete().eq('id',next.id);CONTACTS[leadId]=CONTACTS[leadId].filter(c=>c.id!==next.id);}
@@ -2011,8 +2068,10 @@ function renderEditPanel(lead){
     <div class="form-grid">
       <label class="field">Nome<input id="ef-nome" value="${v(lead.nome)}"></label>
       <label class="field">Cargo<input id="ef-cargo" value="${v(lead.cargo)}"></label>
-      <label class="field">Email<input id="ef-email" value="${v(lead.email)}"></label>
-      <label class="field">Telefone<input id="ef-tel" value="${v(lead.tel)}"></label>
+      <label class="field">Email corporativo<input id="ef-email" value="${v(lead.email)}"></label>
+      <label class="field">Email pessoal<input id="ef-email_pessoal" value="${v(lead.email_pessoal)}"></label>
+      <label class="field">Telefone da empresa<input id="ef-tel_empresa" value="${v(lead.tel_empresa)}"></label>
+      <label class="field">Celular pessoal<input id="ef-tel" value="${v(lead.tel)}"></label>
       <label class="field full">LinkedIn (link)<input id="ef-linkedin" value="${v(lead.linkedin)}" placeholder="https://www.linkedin.com/in/perfil"></label>
       <label class="check full"><input type="checkbox" id="ef-val" ${lead.val?'checked':''}> LinkedIn validado</label>
     </div>
@@ -2064,7 +2123,9 @@ async function saveLeadEdit(){
     nome:g('ef-nome').value.trim()||'—',
     cargo:g('ef-cargo').value.trim()||'—',
     email:g('ef-email').value.trim()||'—',
+    email_pessoal:g('ef-email_pessoal').value.trim()||null,
     tel:g('ef-tel').value.trim(),
+    tel_empresa:g('ef-tel_empresa').value.trim()||null,
     canal:g('ef-canal').value.trim(),
     val:g('ef-val').checked,
     pa:g('ef-pa').value||null,
@@ -2231,7 +2292,7 @@ function renderDashboard(){
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────
 const STAGE_PROB={"radar":.05,"qualificar":.08,"engajar":.12,"aguardando":.18,"agendar":.35,"reuniao":.5,"proposta":.7};
-const OPEN_STAGES=STAGES.filter(st=>!["fechado","perdido"].includes(st.id));
+const OPEN_STAGES=STAGES.filter(st=>!["fechado","perdido","pausado"].includes(st.id));
 function bars(rows,fmtVal=v=>v){
   const max=Math.max(1,...rows.map(r=>r.v));
   return rows.map(r=>`<div class="bar-row"><span class="lbl" title="${escH(r.l)}">${escH(r.l)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.v/max*100)}%;${r.c?`background:${r.c}`:""}"></div></div><span class="val">${fmtVal(r.v,r)}</span></div>`).join("");
@@ -2247,11 +2308,12 @@ function renderRelatorios(){
   const semValor=active.filter(l=>!(+l.valor)).length;
   // Funil: etapa mais avançada que cada lead já alcançou (histórico + etapa atual)
   // Perdido não conta como "chegou ao fim": vale a etapa em que estava antes de perder (pelo histórico).
-  const rank=s=>s==="perdido"?0:STAGES.findIndex(st=>st.statuses.includes(s));
+  const FUN=STAGES.filter(st=>!["perdido","pausado"].includes(st.id));
+  const rank=s=>Math.max(0,FUN.findIndex(st=>st.statuses.includes(s)));
   const maxRank={};
   leads.forEach(l=>maxRank[l.id]=rank(l.status));
   LEAD_HISTORY.filter(h=>h.campo==="status").forEach(h=>{if(maxRank[h.lead_id]!==undefined)maxRank[h.lead_id]=Math.max(maxRank[h.lead_id],rank(h.de),rank(h.para));});
-  const funil=STAGES.filter(st=>st.id!=="perdido").map((st,i)=>({l:st.lbl,v:leads.filter(x=>maxRank[x.id]>=i).length,c:st.id==="fechado"?"var(--green)":""}));
+  const funil=FUN.map((st,i)=>({l:st.lbl,v:leads.filter(x=>maxRank[x.id]>=i).length,c:st.id==="fechado"?"var(--green)":""}));
   const base=Math.max(1,funil[0].v);
   // Tempo na etapa atual
   const tempo=OPEN_STAGES.map(c=>{
@@ -2311,16 +2373,23 @@ function renderModelos(){
     <div class="filterbar">
       ${!missing?`<button class="btn primary sm" type="button" onclick="editTemplate()">${ic("plus","sm")}Novo modelo</button>`:""}
       ${!missing&&usingDefaults?`<button class="btn sm" type="button" onclick="seedTemplates()">Salvar os modelos padrão para a equipe editar</button>`:""}
-      <span class="grow"></span><span class="muted" style="font-size:12px">Variáveis: {nome} {empresa} {cargo} {meu_nome}</span>
+      <span class="grow"></span><span class="muted" style="font-size:12px">Variáveis: {nome} {empresa} {cargo} {meu_nome} {assinatura}</span>
     </div>
     ${Object.keys(TPL_ETAPAS).map(et=>{
       const g=list.filter(t=>t.etapa===et);if(!g.length)return"";
       return`<div class="section"><div class="section-hdr"><h2>${escH(TPL_ETAPAS[et])}</h2><span class="cnt">${g.length}</span></div>
         <div class="emp-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">${g.map(t=>`<div class="tpl-card">
           <div class="tpl-hd"><b>${escH(t.titulo)}</b><span class="chip">${ic(CH_ICON[t.canal]||"circle","sm")}${escH(t.canal)}</span>
-          ${!usingDefaults?`<button class="icon-btn" type="button" title="Editar" onclick="editTemplate(${t.id})">${ic("pencil","sm")}</button><button class="icon-btn" type="button" title="Excluir" onclick="deleteTemplate(${t.id})">${ic("trash","sm")}</button>`:""}</div>
+          ${!usingDefaults&&typeof t.id==="string"?`<button class="btn ghost sm" type="button" title="Modelo padrão: salve para a equipe poder editar" onclick="adoptTemplate('${t.id}')">Salvar p/ editar</button>`:""}
+          ${!usingDefaults&&typeof t.id!=="string"?`<button class="icon-btn" type="button" title="Editar" onclick="editTemplate(${t.id})">${ic("pencil","sm")}</button><button class="icon-btn" type="button" title="Excluir" onclick="deleteTemplate(${t.id})">${ic("trash","sm")}</button>`:""}</div>
           <pre>${escT(t.corpo)}</pre></div>`).join("")}</div></div>`;
     }).join("")}`;
+}
+async function adoptTemplate(did){
+  const{id,...t}=DEFAULT_TEMPLATES.find(x=>x.id===did)||{};if(!t.corpo)return;
+  const{data,error}=await sb.from('msg_templates').insert({...t,created_by:CURRENT_USER_ID}).select();
+  if(error||!data?.length){toast("Erro ao salvar modelo: "+(error?.message||"sem resposta"),"error");return;}
+  TEMPLATES.push(data[0]);toast("Modelo salvo","ok");render();
 }
 async function editTemplate(id){
   const t=id?TEMPLATES.find(x=>x.id===id):{etapa:"follow-up",canal:"WhatsApp",titulo:"",corpo:""};
@@ -2330,7 +2399,7 @@ async function editTemplate(id){
       <label class="field">Canal<select id="tp-canal">${CONTACT_CHANNELS.map(c=>`<option ${t.canal===c?"selected":""}>${c}</option>`).join("")}</select></label>
       <label class="field full">Título<input id="tp-titulo" value="${escH(t.titulo)}" placeholder="Ex: Follow-up curto"></label>
       <label class="field full">Mensagem<textarea id="tp-corpo" rows="8" placeholder="Oi {nome}, ...">${escT(t.corpo)}</textarea></label>
-    </div><div class="muted" style="font-size:12px;margin-top:8px">Variáveis: {nome} (primeiro nome), {empresa}, {cargo}, {meu_nome}</div>`,
+    </div><div class="muted" style="font-size:12px;margin-top:8px">Variáveis: {nome} (primeiro nome), {empresa}, {cargo}, {meu_nome}, {assinatura} (do seu perfil)</div>`,
     buttons:[{label:"Cancelar",value:null},{label:"Salvar",cls:"primary",value:ov=>{
       const r={etapa:ov.querySelector("#tp-etapa").value,canal:ov.querySelector("#tp-canal").value,titulo:ov.querySelector("#tp-titulo").value.trim(),corpo:ov.querySelector("#tp-corpo").value.trim()};
       if(!r.titulo||!r.corpo){(!r.titulo?ov.querySelector("#tp-titulo"):ov.querySelector("#tp-corpo")).classList.add("err");return undefined;}
@@ -2618,6 +2687,7 @@ async function boot(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
   CURRENT_USER_ID=(session.user?.email||'').split('@')[0]||null;
+  MY_PROFILE=session.user?.user_metadata||{};
   document.getElementById('side-user').textContent=teamName(CURRENT_USER_ID);
   if(CURRENT_USER_ID===ADMIN_USER_ID)document.getElementById('nav-dashboard').style.display='flex';
   showApp();renderSkeleton();
@@ -2694,7 +2764,7 @@ function toggleNewLeadMore(){
 }
 function closeNewLeadModal(){
   document.getElementById('modal-new-lead').style.display='none';
-  ['nl-empresa','nl-nome','nl-cargo','nl-email','nl-linkedin','nl-tel','nl-pd','nl-obs','nl-valor'].forEach(id=>{document.getElementById(id).value='';});
+  ['nl-empresa','nl-nome','nl-cargo','nl-email','nl-email_pessoal','nl-linkedin','nl-tel','nl-tel_empresa','nl-pd','nl-obs','nl-valor'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('nl-canal').value='LinkedIn';
   document.getElementById('nl-status').value='apollo-pendente';
 }
@@ -2708,6 +2778,7 @@ async function saveNewLead(){
   // Sem "id": a coluna é identity no Postgres (gerada pelo banco).
   const lead={
     nome:g('nl-nome').trim()||'—',empresa,cargo:g('nl-cargo').trim()||'—',email:g('nl-email').trim()||'—',
+    email_pessoal:g('nl-email_pessoal').trim()||null,tel_empresa:g('nl-tel_empresa').trim()||null,
     tel:g('nl-tel').trim(),canal:g('nl-canal').trim()||'LinkedIn',seg:g('nl-seg')||'Varejo',status:g('nl-status')||'apollo-pendente',
     pc:null,ua:today(),pa:g('nl-pa')||today(),pd:g('nl-pd').trim()||'Primeiro contato',val:false,obs:g('nl-obs').trim(),
     owner_user_id:g('nl-owner')||null,updated_by:CURRENT_USER_ID,
