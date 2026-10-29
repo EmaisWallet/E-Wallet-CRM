@@ -1865,14 +1865,16 @@ async function openProfile(){
     <div class="form-grid">
       <label class="field">Nome de exibição<input id="pf-nome" value="${v(P.nome||teamName(me))}"></label>
       <label class="field">Cargo<input id="pf-cargo" value="${v(P.cargo)}" placeholder="Ex: Executiva de contas"></label>
-      <label class="field">Email de trabalho<input id="pf-email" type="email" value="${v(P.email)}" placeholder="voce@emaiswallet.com.br"></label>
+      <label class="field">Nome de usuário<input id="pf-user" value="${v(me)}" disabled></label>
+      <label class="field">Senha<input id="pf-senha" type="password" value="••••••••" disabled autocomplete="off"></label>
+      <label class="field">Email de trabalho<input id="pf-email" type="email" value="${v(P.email)}" placeholder="voce@emaiswallet.com.br" disabled></label>
       <label class="field">Celular / WhatsApp<input id="pf-tel" value="${v(P.tel)}" placeholder="11 99999-9999"></label>
       <label class="field full">Assinatura das mensagens<textarea id="pf-assinatura" rows="3" placeholder="Ex: Gaby · E+ Wallet · (11) 99999-9999">${escT(P.assinatura||"")}</textarea></label>
     </div>
-    <div class="sub" style="margin-top:8px">O nome de exibição entra no lugar de {meu_nome} nos modelos de mensagem; a assinatura, no lugar de {assinatura}.</div>`,
+    <div class="sub" style="margin-top:8px">Usuário, senha e email são definidos pelo administrador. O nome de exibição entra no lugar de {meu_nome} nos modelos de mensagem; a assinatura, no lugar de {assinatura}.</div>`,
     buttons:[{label:"Cancelar",value:null},{label:"Salvar perfil",cls:"primary",icon:"save",value:ov=>{
       const g=id=>ov.querySelector("#"+id).value.trim();
-      return{nome:g("pf-nome"),cargo:g("pf-cargo"),email:g("pf-email"),tel:g("pf-tel"),assinatura:g("pf-assinatura")};}}]});
+      return{nome:g("pf-nome"),cargo:g("pf-cargo"),email:P.email||"",tel:g("pf-tel"),assinatura:g("pf-assinatura")};}}]});
   if(!res)return;
   const{data,error}=await withTimeout(sb.auth.updateUser({data:res}));
   if(error){toast("Erro ao salvar perfil: "+error.message,"error");return;}
@@ -1885,17 +1887,25 @@ async function openProfile(){
 const TPL_ETAPAS={"primeiro-contato":"Primeiro contato","follow-up":"Follow-up","agendar":"Agendar reunião","pos-reuniao":"Pós-reunião","proposta":"Proposta","reengajar":"Reengajar / pausado","outro":"Outro"};
 // Modelos padrão: usados enquanto a tabela msg_templates não existe ou está vazia.
 const DEFAULT_TEMPLATES=[
-  {id:"d1",etapa:"primeiro-contato",canal:"LinkedIn",titulo:"1º contato — LinkedIn",corpo:"Olá {nome}, tudo bem? Sou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e incentivos do time. Ajudamos empresas a centralizar isso numa carteira digital, com controle e relatório. Faz sentido conversarmos 15 minutos esta semana?"},
+  // Primeiro contato
+  {id:"d1",etapa:"primeiro-contato",canal:"Email",titulo:"1º contato — E-mail",corpo:"Olá {nome},\n\nSou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e os incentivos do time.\n\nAjudamos empresas a centralizar isso numa carteira digital, com controle e relatório para o RH e o comercial.\n\nFaz sentido conversarmos 15 minutos esta semana?\n\n{assinatura}"},
   {id:"d2",etapa:"primeiro-contato",canal:"WhatsApp",titulo:"1º contato — WhatsApp",corpo:"Oi {nome}, tudo bem? Aqui é {meu_nome}, da E+ Wallet. Trabalhamos com premiação e incentivo para equipes via carteira digital e acredito que pode fazer sentido para a {empresa}. Posso te mostrar em 15 minutos?"},
-  {id:"d3",etapa:"follow-up",canal:"WhatsApp",titulo:"Follow-up curto",corpo:"Oi {nome}, passando para retomar minha mensagem sobre a E+ Wallet. Faz sentido conversarmos esta semana? Se não for com você, pode me indicar a pessoa certa na {empresa}?"},
-  {id:"d4",etapa:"follow-up",canal:"Email",titulo:"Follow-up por e-mail",corpo:"Olá {nome},\n\nRetomando meu contato anterior: a E+ Wallet ajuda empresas como a {empresa} a organizar premiações e incentivos em uma carteira digital, com controle total para o RH e o comercial.\n\nTem 15 minutos nos próximos dias para eu te mostrar como funciona?\n\nAbraço,\n{meu_nome}"},
-  {id:"d6",etapa:"follow-up",canal:"WhatsApp",titulo:"Pedido de indicação",corpo:"Oi {nome}, tudo bem? Tentei falar com você algumas vezes sobre a E+ Wallet. Se esse assunto não for com você, consegue me indicar quem cuida de premiação e incentivo na {empresa}? Obrigado!"},
-  {id:"d7",etapa:"agendar",canal:"WhatsApp",titulo:"Confirmar horário",corpo:"Oi {nome}! Que bom que faz sentido conversarmos. Tenho estes horários livres: [opção 1] ou [opção 2]. Qual fica melhor para você? Te mando o convite com o link."},
-  {id:"d8",etapa:"agendar",canal:"Email",titulo:"Convite de reunião",corpo:"Olá {nome},\n\nConforme combinamos, segue o convite para nossa conversa sobre a E+ Wallet na {empresa}.\n\nPauta (15 min):\n- Como funcionam hoje as premiações e incentivos\n- Como a carteira digital E+ Wallet centraliza isso\n- Próximos passos\n\nAté lá!\n{assinatura}"},
-  {id:"d5",etapa:"pos-reuniao",canal:"WhatsApp",titulo:"Pós-reunião",corpo:"Oi {nome}, obrigado pela conversa! Como combinamos, sigo à disposição para darmos o próximo passo com a {empresa}. Qual o melhor momento para alinharmos a proposta?"},
-  {id:"d9",etapa:"proposta",canal:"Email",titulo:"Envio da proposta",corpo:"Olá {nome},\n\nComo combinamos, segue a proposta da E+ Wallet para a {empresa}. Ela cobre o formato da carteira, a operação das premiações e os prazos de implantação.\n\nFico à disposição para ajustar o que precisar. Podemos falar esta semana para tirar dúvidas?\n\n{assinatura}"},
-  {id:"d10",etapa:"proposta",canal:"WhatsApp",titulo:"Follow-up da proposta",corpo:"Oi {nome}, tudo bem? Conseguiu dar uma olhada na proposta da E+ Wallet? Se quiser, marcamos 15 minutos para eu tirar as dúvidas do time da {empresa}."},
-  {id:"d11",etapa:"reengajar",canal:"WhatsApp",titulo:"Retomar contato",corpo:"Oi {nome}, tudo bem? Conversamos há um tempo sobre premiação e incentivo na {empresa}. Mudou algo por aí? Se fizer sentido, retomamos com uma conversa rápida."},
+  {id:"d3",etapa:"primeiro-contato",canal:"LinkedIn",titulo:"1º contato — LinkedIn",corpo:"Olá {nome}, tudo bem? Sou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e incentivos do time. Ajudamos empresas a centralizar isso numa carteira digital, com controle e relatório. Faz sentido conversarmos 15 minutos esta semana?"},
+  // Follow-up
+  {id:"d4",etapa:"follow-up",canal:"Email",titulo:"Follow-up — E-mail",corpo:"Olá {nome},\n\nRetomando meu contato anterior: a E+ Wallet ajuda empresas como a {empresa} a organizar premiações e incentivos em uma carteira digital, com controle total para o RH e o comercial.\n\nTem 15 minutos nos próximos dias para eu te mostrar como funciona? Se o assunto não for com você, pode me indicar a pessoa certa?\n\n{assinatura}"},
+  {id:"d5",etapa:"follow-up",canal:"WhatsApp",titulo:"Follow-up — WhatsApp",corpo:"Oi {nome}, passando para retomar minha mensagem sobre a E+ Wallet. Faz sentido conversarmos esta semana? Se não for com você, pode me indicar a pessoa certa na {empresa}?"},
+  // Agendar reunião
+  {id:"d7",etapa:"agendar",canal:"Email",titulo:"Convite de reunião — E-mail",corpo:"Olá {nome},\n\nConforme combinamos, segue o convite para nossa conversa sobre a E+ Wallet na {empresa}.\n\nPauta (15 min):\n- Como funcionam hoje as premiações e incentivos\n- Como a carteira digital E+ Wallet centraliza isso\n- Próximos passos\n\nAté lá!\n{assinatura}"},
+  {id:"d8",etapa:"agendar",canal:"WhatsApp",titulo:"Confirmar horário — WhatsApp",corpo:"Oi {nome}! Que bom que faz sentido conversarmos. Tenho estes horários livres: [opção 1] ou [opção 2]. Qual fica melhor para você? Te mando o convite com o link."},
+  // Pós-reunião
+  {id:"d10",etapa:"pos-reuniao",canal:"Email",titulo:"Resumo da reunião — E-mail",corpo:"Olá {nome},\n\nObrigado pela conversa de hoje! Resumindo o que vimos:\n- [ponto 1]\n- [ponto 2]\n\nPróximo passo combinado: [próximo passo], até [data].\n\nQualquer dúvida, estou à disposição.\n\n{assinatura}"},
+  {id:"d11",etapa:"pos-reuniao",canal:"WhatsApp",titulo:"Pós-reunião — WhatsApp",corpo:"Oi {nome}, obrigado pela conversa! Como combinamos, sigo à disposição para darmos o próximo passo com a {empresa}. Qual o melhor momento para alinharmos a proposta?"},
+  // Proposta
+  {id:"d13",etapa:"proposta",canal:"Email",titulo:"Envio da proposta — E-mail",corpo:"Olá {nome},\n\nComo combinamos, segue a proposta da E+ Wallet para a {empresa}. Ela cobre o formato da carteira, a operação das premiações e os prazos de implantação.\n\nFico à disposição para ajustar o que precisar. Podemos falar esta semana para tirar dúvidas?\n\n{assinatura}"},
+  {id:"d14",etapa:"proposta",canal:"WhatsApp",titulo:"Follow-up da proposta — WhatsApp",corpo:"Oi {nome}, tudo bem? Conseguiu dar uma olhada na proposta da E+ Wallet? Se quiser, marcamos 15 minutos para eu tirar as dúvidas do time da {empresa}."},
+  // Reengajar / pausado
+  {id:"d16",etapa:"reengajar",canal:"Email",titulo:"Retomar contato — E-mail",corpo:"Olá {nome},\n\nConversamos há um tempo sobre premiação e incentivo na {empresa}. Queria saber se o cenário mudou por aí: novas metas, campanhas ou equipe crescendo costumam ser um bom momento para rever isso.\n\nSe fizer sentido, retomamos com uma conversa rápida.\n\n{assinatura}"},
+  {id:"d17",etapa:"reengajar",canal:"WhatsApp",titulo:"Retomar contato — WhatsApp",corpo:"Oi {nome}, tudo bem? Conversamos há um tempo sobre premiação e incentivo na {empresa}. Mudou algo por aí? Se fizer sentido, retomamos com uma conversa rápida."},
 ];
 // Modelos do banco + os padrões das etapas que o banco ainda não cobre (assim as etapas novas aparecem).
 const allTemplates=()=>{
