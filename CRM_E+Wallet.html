@@ -1873,6 +1873,7 @@ async function deleteContact(cid){
 async function openProfile(){
   const me=CURRENT_USER_ID,P=MY_PROFILE,v=x=>escH(x||"");
   const mine=LEADS.filter(l=>l.owner_user_id===me);
+  let myPw="";try{myPw=localStorage.getItem('crm_pw_'+me)||"";}catch(e){}
   const month=today().slice(0,7);
   const myLogs=CONTACT_LOG.filter(c=>c.user_id===me);
   const st=id=>mine.filter(l=>SC[l.status]?.stage===id).length;
@@ -1888,7 +1889,7 @@ async function openProfile(){
       <label class="field">Nome de exibição<input id="pf-nome" value="${v(P.nome||teamName(me))}"></label>
       <label class="field">Cargo<input id="pf-cargo" value="${v(P.cargo)}" placeholder="Ex: Executiva de contas"></label>
       <label class="field">Nome de usuário<input id="pf-user" value="${v(me)}" disabled></label>
-      <label class="field">Senha<input id="pf-senha" type="password" value="••••••••" disabled autocomplete="off"></label>
+      <label class="field">Senha<input id="pf-senha" value="${v(myPw)}" placeholder="Saia e entre de novo para exibir" disabled autocomplete="off"></label>
       <label class="field">Email de trabalho<input id="pf-email" type="email" value="${v(P.email)}" placeholder="voce@emaiswallet.com.br" disabled></label>
       <label class="field">Celular / WhatsApp<input id="pf-tel" value="${v(P.tel)}" placeholder="11 99999-9999"></label>
       <label class="field full">Assinatura das mensagens<textarea id="pf-assinatura" rows="3" placeholder="Ex: Gaby · E+ Wallet · (11) 99999-9999">${escT(P.assinatura||"")}</textarea></label>
@@ -1906,28 +1907,27 @@ async function openProfile(){
 }
 
 // ── MODELOS DE MENSAGEM ───────────────────────────────────────────────────
-const TPL_ETAPAS={"primeiro-contato":"Primeiro contato","follow-up":"Follow-up","agendar":"Agendar reunião","pos-reuniao":"Pós-reunião","proposta":"Proposta","reengajar":"Reengajar / pausado","outro":"Outro"};
+const TPL_ETAPAS={"primeiro-contato":"Primeiro contato","follow-up":"Follow-up","agendar":"Reunião","proposta":"Proposta","reengajar":"Pausado","outro":"Outro"};
 // Modelos padrão: usados enquanto a tabela msg_templates não existe ou está vazia.
 const DEFAULT_TEMPLATES=[
   // Primeiro contato
-  {id:"d1",etapa:"primeiro-contato",canal:"Email",titulo:"1º contato — E-mail",corpo:"Olá {nome},\n\nSou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e os incentivos do time.\n\nAjudamos empresas a centralizar isso numa carteira digital, com controle e relatório para o RH e o comercial.\n\nFaz sentido conversarmos 15 minutos esta semana?\n\n{assinatura}"},
-  {id:"d2",etapa:"primeiro-contato",canal:"WhatsApp",titulo:"1º contato — WhatsApp",corpo:"Oi {nome}, tudo bem? Aqui é {meu_nome}, da E+ Wallet. Trabalhamos com premiação e incentivo para equipes via carteira digital e acredito que pode fazer sentido para a {empresa}. Posso te mostrar em 15 minutos?"},
-  {id:"d3",etapa:"primeiro-contato",canal:"LinkedIn",titulo:"1º contato — LinkedIn",corpo:"Olá {nome}, tudo bem? Sou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e incentivos do time. Ajudamos empresas a centralizar isso numa carteira digital, com controle e relatório. Faz sentido conversarmos 15 minutos esta semana?"},
+  {id:"d1",etapa:"primeiro-contato",canal:"Email",titulo:"E-mail",corpo:"Olá {nome},\n\nSou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e os incentivos do time.\n\nAjudamos empresas a centralizar isso numa carteira digital, com controle e relatório para o RH e o comercial.\n\nFaz sentido conversarmos 15 minutos esta semana?\n\n{assinatura}"},
+  {id:"d3",etapa:"primeiro-contato",canal:"LinkedIn",titulo:"LinkedIn",corpo:"Olá {nome}, tudo bem? Sou {meu_nome}, da E+ Wallet. Vi que você atua como {cargo} na {empresa} e queria entender como vocês fazem hoje as premiações e incentivos do time. Ajudamos empresas a centralizar isso numa carteira digital, com controle e relatório. Faz sentido conversarmos 15 minutos esta semana?"},
+  {id:"d2",etapa:"primeiro-contato",canal:"WhatsApp",titulo:"WhatsApp",corpo:"Oi {nome}, tudo bem? Aqui é {meu_nome}, da E+ Wallet. Trabalhamos com premiação e incentivo para equipes via carteira digital e acredito que pode fazer sentido para a {empresa}. Posso te mostrar em 15 minutos?"},
   // Follow-up
-  {id:"d4",etapa:"follow-up",canal:"Email",titulo:"Follow-up — E-mail",corpo:"Olá {nome},\n\nRetomando meu contato anterior: a E+ Wallet ajuda empresas como a {empresa} a organizar premiações e incentivos em uma carteira digital, com controle total para o RH e o comercial.\n\nTem 15 minutos nos próximos dias para eu te mostrar como funciona? Se o assunto não for com você, pode me indicar a pessoa certa?\n\n{assinatura}"},
-  {id:"d5",etapa:"follow-up",canal:"WhatsApp",titulo:"Follow-up — WhatsApp",corpo:"Oi {nome}, passando para retomar minha mensagem sobre a E+ Wallet. Faz sentido conversarmos esta semana? Se não for com você, pode me indicar a pessoa certa na {empresa}?"},
+  {id:"d4",etapa:"follow-up",canal:"Email",titulo:"E-mail",corpo:"Olá {nome},\n\nRetomando meu contato anterior: a E+ Wallet ajuda empresas como a {empresa} a organizar premiações e incentivos em uma carteira digital, com controle total para o RH e o comercial.\n\nTem 15 minutos nos próximos dias para eu te mostrar como funciona? Se o assunto não for com você, pode me indicar a pessoa certa?\n\n{assinatura}"},
+  {id:"d6",etapa:"follow-up",canal:"LinkedIn",titulo:"LinkedIn",corpo:"Olá {nome}, retomando minha mensagem sobre a E+ Wallet. Ajudamos empresas como a {empresa} a organizar premiações e incentivos numa carteira digital. Faz sentido conversarmos 15 minutos esta semana? Se não for com você, pode me indicar a pessoa certa?"},
+  {id:"d5",etapa:"follow-up",canal:"WhatsApp",titulo:"WhatsApp",corpo:"Oi {nome}, passando para retomar minha mensagem sobre a E+ Wallet. Faz sentido conversarmos esta semana? Se não for com você, pode me indicar a pessoa certa na {empresa}?"},
   // Agendar reunião
-  {id:"d7",etapa:"agendar",canal:"Email",titulo:"Convite de reunião — E-mail",corpo:"Olá {nome},\n\nConforme combinamos, segue o convite para nossa conversa sobre a E+ Wallet na {empresa}.\n\nPauta (15 min):\n- Como funcionam hoje as premiações e incentivos\n- Como a carteira digital E+ Wallet centraliza isso\n- Próximos passos\n\nAté lá!\n{assinatura}"},
-  {id:"d8",etapa:"agendar",canal:"WhatsApp",titulo:"Confirmar horário — WhatsApp",corpo:"Oi {nome}! Que bom que faz sentido conversarmos. Tenho estes horários livres: [opção 1] ou [opção 2]. Qual fica melhor para você? Te mando o convite com o link."},
-  // Pós-reunião
-  {id:"d10",etapa:"pos-reuniao",canal:"Email",titulo:"Resumo da reunião — E-mail",corpo:"Olá {nome},\n\nObrigado pela conversa de hoje! Resumindo o que vimos:\n- [ponto 1]\n- [ponto 2]\n\nPróximo passo combinado: [próximo passo], até [data].\n\nQualquer dúvida, estou à disposição.\n\n{assinatura}"},
-  {id:"d11",etapa:"pos-reuniao",canal:"WhatsApp",titulo:"Pós-reunião — WhatsApp",corpo:"Oi {nome}, obrigado pela conversa! Como combinamos, sigo à disposição para darmos o próximo passo com a {empresa}. Qual o melhor momento para alinharmos a proposta?"},
+  {id:"d7",etapa:"agendar",canal:"Email",titulo:"Convite de reunião - E-mail",corpo:"Olá {nome},\n\nConforme combinamos, segue o convite para nossa conversa sobre a E+ Wallet na {empresa}.\n\nPauta (15 min):\n- Como funcionam hoje as premiações e incentivos\n- Como a carteira digital E+ Wallet centraliza isso\n- Próximos passos\n\nAté lá!\n{assinatura}"},
+  {id:"d8",etapa:"agendar",canal:"WhatsApp",titulo:"Convite de reunião - WhatsApp",corpo:"Oi {nome}! Que bom que faz sentido conversarmos. Tenho estes horários livres: [opção 1] ou [opção 2]. Qual fica melhor para você? Te mando o convite com o link."},
   // Proposta
-  {id:"d13",etapa:"proposta",canal:"Email",titulo:"Envio da proposta — E-mail",corpo:"Olá {nome},\n\nComo combinamos, segue a proposta da E+ Wallet para a {empresa}. Ela cobre o formato da carteira, a operação das premiações e os prazos de implantação.\n\nFico à disposição para ajustar o que precisar. Podemos falar esta semana para tirar dúvidas?\n\n{assinatura}"},
-  {id:"d14",etapa:"proposta",canal:"WhatsApp",titulo:"Follow-up da proposta — WhatsApp",corpo:"Oi {nome}, tudo bem? Conseguiu dar uma olhada na proposta da E+ Wallet? Se quiser, marcamos 15 minutos para eu tirar as dúvidas do time da {empresa}."},
-  // Reengajar / pausado
-  {id:"d16",etapa:"reengajar",canal:"Email",titulo:"Retomar contato — E-mail",corpo:"Olá {nome},\n\nConversamos há um tempo sobre premiação e incentivo na {empresa}. Queria saber se o cenário mudou por aí: novas metas, campanhas ou equipe crescendo costumam ser um bom momento para rever isso.\n\nSe fizer sentido, retomamos com uma conversa rápida.\n\n{assinatura}"},
-  {id:"d17",etapa:"reengajar",canal:"WhatsApp",titulo:"Retomar contato — WhatsApp",corpo:"Oi {nome}, tudo bem? Conversamos há um tempo sobre premiação e incentivo na {empresa}. Mudou algo por aí? Se fizer sentido, retomamos com uma conversa rápida."},
+  {id:"d13",etapa:"proposta",canal:"Email",titulo:"Envio da proposta por E-mail",corpo:"Olá {nome},\n\nComo combinamos, segue a proposta da E+ Wallet para a {empresa}. Ela cobre o formato da carteira, a operação das premiações e os prazos de implantação.\n\nFico à disposição para ajustar o que precisar. Podemos falar esta semana para tirar dúvidas?\n\n{assinatura}"},
+  {id:"d15",etapa:"proposta",canal:"Email",titulo:"Follow-up da proposta por E-mail",corpo:"Olá {nome},\n\nPassando para saber se conseguiu avaliar a proposta da E+ Wallet para a {empresa}. Se houver algum ponto a ajustar ou dúvida do time, posso marcar 15 minutos para conversarmos.\n\n{assinatura}"},
+  {id:"d14",etapa:"proposta",canal:"WhatsApp",titulo:"Follow-up da proposta por WhatsApp",corpo:"Oi {nome}, tudo bem? Conseguiu dar uma olhada na proposta da E+ Wallet? Se quiser, marcamos 15 minutos para eu tirar as dúvidas do time da {empresa}."},
+  // Pausado
+  {id:"d16",etapa:"reengajar",canal:"Email",titulo:"E-mail",corpo:"Olá {nome},\n\nConversamos há um tempo sobre premiação e incentivo na {empresa}. Queria saber se o cenário mudou por aí: novas metas, campanhas ou equipe crescendo costumam ser um bom momento para rever isso.\n\nSe fizer sentido, retomamos com uma conversa rápida.\n\n{assinatura}"},
+  {id:"d17",etapa:"reengajar",canal:"WhatsApp",titulo:"WhatsApp",corpo:"Oi {nome}, tudo bem? Conversamos há um tempo sobre premiação e incentivo na {empresa}. Mudou algo por aí? Se fizer sentido, retomamos com uma conversa rápida."},
 ];
 // Modelos do banco + os padrões das etapas que o banco ainda não cobre (assim as etapas novas aparecem).
 const allTemplates=()=>{
@@ -1946,7 +1946,7 @@ function renderTemplatePicker(l){
   const list=allTemplates();
   sel.innerHTML=`<option value="">Escolher modelo…</option>`+Object.keys(TPL_ETAPAS).map(et=>{
     const g=list.filter(t=>t.etapa===et);
-    return g.length?`<optgroup label="${TPL_ETAPAS[et]}${et===sug?" (sugerido)":""}">${g.map(t=>`<option value="${t.id}">${escH(t.titulo)} · ${escH(t.canal)}</option>`).join("")}</optgroup>`:"";
+    return g.length?`<optgroup label="${TPL_ETAPAS[et]}${et===sug?" (sugerido)":""}">${g.map(t=>`<option value="${t.id}">${escH(t.titulo)}</option>`).join("")}</optgroup>`:"";
   }).join("");
   const first=list.find(t=>t.etapa===sug);
   sel.value=first?String(first.id):"";
@@ -2703,7 +2703,8 @@ async function fetchAllData(){
   TEMPLATES=templates;
 }
 const usernameToEmail=u=>u.trim().toLowerCase()+'@'+EMAIL_DOMAIN;
-async function doLogin(username,password){const{error}=await sb.auth.signInWithPassword({email:usernameToEmail(username),password});return error;}
+// A senha fica guardada só neste navegador, para o usuário consultar em "Meu perfil".
+async function doLogin(username,password){const{error}=await sb.auth.signInWithPassword({email:usernameToEmail(username),password});if(!error)try{localStorage.setItem('crm_pw_'+username.trim().toLowerCase(),password);}catch(e){}return error;}
 async function doLogout(){await sb.auth.signOut();location.reload();}
 function showApp(){document.getElementById('login-screen').style.display='none';document.querySelector('.app').style.display='grid';}
 function showLogin(errMsg){
