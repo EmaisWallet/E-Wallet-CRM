@@ -103,6 +103,8 @@ a{color:var(--blue)}
 .chip.late{background:var(--red-soft);color:var(--red-text)}
 .chip.today{background:var(--amber-soft);color:var(--amber-text)}
 .chip.ok{background:var(--green-soft);color:var(--green-text)}
+.chip.meet-toggle{cursor:pointer}
+.chip.meet-toggle:hover{filter:brightness(.95);box-shadow:inset 0 0 0 1px currentColor}
 .chip.gold{background:var(--gold-soft);color:var(--gold-text)}
 .chip button{border:none;background:none;color:inherit;cursor:pointer;display:inline-flex;padding:0}
 
@@ -696,7 +698,7 @@ a{color:var(--blue)}
             <div class="callout-date" id="d-next-date">—</div>
           </div>
         </div>
-        <div class="move-row"><span>Etapa</span><select id="d-move" onchange="moveFromDrawer(this.value)"></select></div>
+        <div class="move-row"><span>Etapa</span><select id="d-move" onchange="moveFromDrawer(this.value)"></select><select id="d-meet" onchange="setMeet(this.value)" hidden></select></div>
       </div>
 
       <div class="d-block" id="d-suggest"></div>
@@ -837,15 +839,16 @@ const STAGES = [
   {id:"qualificar", lbl:"Qualificar",      ic:"search",    c:"#8B5CF6", statuses:["apollo-pendente"],                       drop:"apollo-pendente"},
   {id:"engajar",    lbl:"Engajar",         ic:"send",      c:"#2563EB", statuses:["email-preparado","reengajamento"],       drop:"email-preparado"},
   {id:"aguardando", lbl:"Aguardando",      ic:"hourglass", c:"#F59E0B", statuses:["aguardando","follow-up","nao-entregue"], drop:"aguardando"},
-  {id:"agendar",    lbl:"Agendar reunião", ic:"calendar",  c:"#14B8A6", statuses:["agendamento"],                           drop:"agendamento"},
-  {id:"reuniao",    lbl:"Reunião",         ic:"handshake", c:"#16A34A", statuses:["reuniao"],                               drop:"reuniao"},
+  {id:"reuniao",    lbl:"Reunião",         ic:"handshake", c:"#16A34A", statuses:["agendamento","reuniao"],                 drop:"agendamento"},
   {id:"proposta",   lbl:"Proposta",        ic:"file",      c:"#DAA520", statuses:["proposta"],                              drop:"proposta"},
   {id:"pausado",    lbl:"Pausado",         ic:"clock",     c:"#94A3B8", statuses:["pausado"],                               drop:"pausado"},
   {id:"fechado",    lbl:"Fechado",         ic:"trophy",    c:"#15803D", statuses:["ganho"],                                 drop:"ganho"},
   {id:"perdido",    lbl:"Perdido",         ic:"xCircle",   c:"#6B7280", statuses:["perdido"],                               drop:"perdido"},
 ];
 // Sub-situação dentro da etapa (aparece como etiqueta no card, não como etapa separada).
-const STATUS_TAG={"follow-up":"Follow-up","nao-entregue":"Não entregue","reengajamento":"Reengajar"};
+// Na Reunião: "agendamento" = Agendando, "reuniao" = Marcada.
+const STATUS_TAG={"follow-up":"Follow-up","nao-entregue":"Não entregue","reengajamento":"Reengajar","agendamento":"Agendando","reuniao":"Marcada"};
+const MEET_SUB=[["agendamento","Agendando"],["reuniao","Marcada"]];
 const URGENT_STATUSES=["follow-up","nao-entregue","apollo-pendente","email-preparado","reengajamento","agendamento"];
 const SC={};
 STAGES.forEach(st=>st.statuses.forEach(s=>{SC[s]={lbl:st.lbl,tag:STATUS_TAG[s]||"",c:st.c,urg:URGENT_STATUSES.includes(s),stage:st.id};}));
@@ -1325,7 +1328,7 @@ function renderStats(){
     `<div class="kpi static kpi-who" title="Números dos leads em que você é o responsável">${ic("user","sm")}<span>Meus números</span></div>`+
     k("urgente",myUrg,"urgentes hoje",myUrg?"warn":"")+
     k("aguardando",inStage("aguardando"),"aguardando")+
-    k("agendar",inStage("agendar"),"agendando reunião")+
+    k("reuniao",inStage("reuniao"),"reunião")+
     k("proposta",inStage("proposta"),"proposta enviada")+
     k("fechado",inStage("fechado"),"fechado / ganho")+
     k("perdido",inStage("perdido"),"perdido");
@@ -1372,7 +1375,9 @@ function cardHtml(l){
   const people=leadPeople(l);
   const st=contactState(l);
   const ins=leadInsight(l);
-  const alertSt=SC[l.status]?.tag?`<span class="chip ${l.status==="reengajamento"?"":"late"}">${escH(SC[l.status].tag)}</span>`:"";
+  const tagCls={"reengajamento":"","agendamento":"today","reuniao":"ok"}[l.status]??"late";
+  const meet=SC[l.status]?.stage==="reuniao";
+  const alertSt=SC[l.status]?.tag?`<span class="chip ${tagCls}${meet?" meet-toggle":""}"${meet?` title="Clique para marcar como ${l.status==="reuniao"?"Agendando":"Marcada"}" onclick="event.stopPropagation();toggleMeet(${l.id})"`:""}>${escH(SC[l.status].tag)}</span>`:"";
   const cls=["kcard",isOverdue(l)&&isUrg(l)?"late":hasProvaSocial(l)?"provasocial":hasNewDecisor(l)?"newdecisor":""].join(" ");
   const names=people.length?`<b>${escH(people[0].nome||people[0].email)}</b>${people.length>1?` +${people.length-1}`:""}`:`<span class="muted">Sem pessoa definida</span>`;
   const owner=l.owner_user_id?`<span class="kcard-owner" title="Responsável: ${escH(teamName(l.owner_user_id))}">${escH(initials(teamName(l.owner_user_id)))}</span>`:"";
@@ -1452,7 +1457,7 @@ async function changeStatus(lead,status,extra={}){
   const prev=lead.status;
   const err=await saveLeadChanges(lead,changes);
   if(err){lead.status=prev;toast("Erro ao mover: "+err.message,"error");render();return false;}
-  toast(`${lead.empresa} → ${SC[status]?.lbl||status}`,"ok");
+  toast(`${lead.empresa} → ${SC[status]?.lbl||status}${SC[status]?.tag?" · "+SC[status].tag:""}`,"ok");
   render();
   if(drawerIsOpen()&&_currentDrawerId===lead.id)openDrawer(lead.id,_drawerTab);
   return true;
@@ -1572,6 +1577,7 @@ function openDrawer(id,tab="resumo"){
   document.getElementById("d-next-txt").textContent=l.pd||"—";
   document.getElementById("d-next-date").textContent=hasVal(l.pa)?`Prazo: ${fmt(l.pa)}`:"Sem data definida";
   document.getElementById("d-move").innerHTML=STAGES.map(st=>`<option value="${st.id}" ${st.id===SC[l.status]?.stage?"selected":""}>${escH(st.lbl)}</option>`).join("");
+  renderMeetSelect(l);
 
   const ctxSec=document.getElementById("d-context-section");
   if(l.fit||l.gatilho||l.hipotese){
@@ -1647,6 +1653,22 @@ async function moveFromDrawer(stageId){
   if(SC[lead.status]?.stage===stageId)return;
   const ok=await changeStatus(lead,stageById(stageId).drop);
   if(!ok)document.getElementById("d-move").value=SC[lead.status]?.stage;
+  renderMeetSelect(lead);
+}
+// Sub-situação da Reunião (Agendando / Marcada): seletor no lead e etiqueta clicável no card.
+function renderMeetSelect(l){
+  const el=document.getElementById("d-meet");if(!el)return;
+  el.hidden=SC[l.status]?.stage!=="reuniao";
+  el.innerHTML=MEET_SUB.map(([v,t])=>`<option value="${v}" ${v===l.status?"selected":""}>${t}</option>`).join("");
+}
+async function setMeet(status){
+  const lead=LEADS.find(l=>l.id===_currentDrawerId);if(!lead||lead.status===status)return;
+  const ok=await changeStatus(lead,status);
+  if(!ok)renderMeetSelect(lead);
+}
+async function toggleMeet(id){
+  const lead=LEADS.find(l=>l.id===id);if(!lead)return;
+  await changeStatus(lead,lead.status==="reuniao"?"agendamento":"reuniao");
 }
 async function saveLeadChanges(lead,changes){
   changes.ua=today();
@@ -1855,7 +1877,7 @@ async function openProfile(){
   const myLogs=CONTACT_LOG.filter(c=>c.user_id===me);
   const st=id=>mine.filter(l=>SC[l.status]?.stage===id).length;
   const stats=[[mine.filter(isActive).length,"leads ativos"],[myLogs.filter(c=>(c.contacted_on||"").startsWith(month)).length,"contatos no mês"],
-    [st("agendar")+st("reuniao"),"reuniões"],[st("proposta"),"propostas"],[st("fechado"),"fechados"],[st("perdido"),"perdidos"]];
+    [st("reuniao"),"reuniões"],[st("proposta"),"propostas"],[st("fechado"),"fechados"],[st("perdido"),"perdidos"]];
   const res=await openModal({title:"Meu perfil",icon:"user",html:`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <div class="avatar lg" style="background:var(--gold);color:#fff">${escH(initials(teamName(me)))}</div>
@@ -2301,7 +2323,7 @@ function renderDashboard(){
 }
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────
-const STAGE_PROB={"radar":.05,"qualificar":.08,"engajar":.12,"aguardando":.18,"agendar":.35,"reuniao":.5,"proposta":.7};
+const STAGE_PROB={"radar":.05,"qualificar":.08,"engajar":.12,"aguardando":.18,"reuniao":.45,"proposta":.7};
 const OPEN_STAGES=STAGES.filter(st=>!["fechado","perdido","pausado"].includes(st.id));
 function bars(rows,fmtVal=v=>v){
   const max=Math.max(1,...rows.map(r=>r.v));
@@ -2349,7 +2371,7 @@ function renderRelatorios(){
         <div class="stat-pair"><div><div class="big-num">${brl(totalAtivo)||"R$ 0"}</div><span>total em leads ativos</span></div>
         <div><div class="big-num" style="color:var(--gold-text)">${brl(ponderado)||"R$ 0"}</div><span>previsão ponderada pela etapa</span></div></div>
         <div class="stat-pair"><div><b>${brl(ganho)||"R$ 0"}</b><span>já ganho</span></div><div><b>${semValor}</b><span>leads ativos sem valor preenchido</span></div></div>
-        <div class="sub" style="margin:10px 0 0">Ponderação: Radar 5%, Qualificar 8%, Engajar 12%, Aguardando 18%, Agendar reunião 35%, Reunião 50%, Proposta 70%.</div>
+        <div class="sub" style="margin:10px 0 0">Ponderação: Radar 5%, Qualificar 8%, Engajar 12%, Aguardando 18%, Reunião 45%, Proposta 70%.</div>
       </div>
       <div class="card"><h3>${ic("filter")}Funil — até onde cada lead já chegou</h3>
         ${bars(funil,(v)=>`${v} · ${Math.round(v/base*100)}%`)}
